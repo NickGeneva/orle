@@ -1,4 +1,5 @@
 import os
+import re
 import yaml
 import logging
 
@@ -303,10 +304,30 @@ class EnvironmentBuilder(object):
         self
     ) -> bool:
         """Runs validation checks of the environment folder
-        TODO: Implement
+        TODO: Add parallel support
 
         Returns:
             bool: Validation successful
         """
+        control_file = os.path.join(self.env_dir, 'system', 'controlDict')
+
+        if not os.path.exists(control_file):
+            logger.error('Could not find controlDict file to edit.')
+            return False
+
+        # Read in lines
+        with open(control_file, 'r') as file:
+            lines = file.readlines() 
+
+        # Get start time
+        for line in lines:
+            if "startTime" in line:
+                start_time = float(re.findall(r'\d+', line)[0])
+                break
+        
+        # Make sure start time folders exist
+        field_dir = os.path.join(self.env_dir, "{:g}".format(start_time))
+        if not os.path.exists(field_dir):
+            logger.error('Starting time-step fields do not exist.')
 
         return True
