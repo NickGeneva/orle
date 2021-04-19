@@ -275,7 +275,7 @@ class EnvironmentBuilder(object):
             return False
         
         # Required keys
-        req_keys = ['id', 'name', 'hash', 'mods']
+        req_keys = ['id', 'name', 'hash', 'solver', 'np', 'mods']
         for key in req_keys:
             if not key in self.config.keys():
                 logger.error('Required parameter {:s} not in config.'.format(key))

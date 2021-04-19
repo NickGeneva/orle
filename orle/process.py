@@ -26,6 +26,7 @@ class OrleProcess(object):
         self.config = world_config
         self.lock = None
         self.job_file = None
+        self.env_dir = None
 
     def start(
         self,
@@ -60,13 +61,13 @@ class OrleProcess(object):
             logger.warning('Could not find directory for environment job files')
             return False
 
-        for (dirpath, dirnames, filenames) in os.walk(self.config['job_dir']):
+        for (dirpath, _, filenames) in os.walk(self.config['job_dir']):
             for filename in filenames:
                 file_path = os.path.join(dirpath, filename)
                 # Only attempt to parse yml files
                 if file_path.endswith('.yml'):
                     self.lock = FileLock(file_path+'.lock')
-                    
+
                     # Call hidden function, regular .aquire() is blocking call without Timeout
                     self.lock._acquire()
                     if self.lock.is_locked:
@@ -108,10 +109,11 @@ class OrleProcess(object):
         """
         logger.info('Setting up environment folder.')
         env_builder = EnvironmentBuilder(self.job_file, self.config)
-
+        self.env_dir = env_builder.env_dir
+        # Make sure necessary params are in the config
         if not env_builder.validate_config():
             return False
-        
+
         logger.info('Valid job config file file loaded. Building environment folder.')
         return env_builder.setup_env()
 

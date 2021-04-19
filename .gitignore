@@ -144,7 +144,9 @@ dmypy.json
 *.pth
 *.pt
 *.mp4
+*.msh
 
 # Misc folders
 cylinder/
 cylinder_world0/
+temp/
