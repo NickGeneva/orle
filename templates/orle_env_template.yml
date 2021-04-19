@@ -9,7 +9,7 @@
 id: 0
 
 # Simulation information
-name: cylinder
+name: template
 hash: 0
 
 params:
@@ -19,25 +19,15 @@ params:
 
 mods:
   -
-    func: set_control_dict
+    func: set_something
     params:
+      str_param: string
       props:
-        startTime: 0
-        endTime: 1.0
-        writeInterval: 100
-  -
-    func: set_boundary
-    params:
-      field: U
-      boundary: jet1
-      time_step: 0
-      props:
-        type: fixedValue
-        value: uniform(-1 0 0)
+        my_prop: 0
 
 post:
   -
-    func: get_forces
+    func: set_data
     params:
-      boundary: cylinder
-      time_step: 0
+      my_param: 1
+    

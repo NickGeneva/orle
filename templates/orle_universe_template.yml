@@ -9,7 +9,7 @@
 # =====================================
 
 # Universe information
-name: cylinder
+name: template
 version: 0.0.1
 author: John Doe
 
@@ -17,10 +17,10 @@ author: John Doe
 worlds:
   -
     id: 0
-    world_dir: $LOCAL/cylinder_world0
+    world_dir: $LOCAL/world0
     job_dir: $WORLD/configs
     output_dir: $WORLD/output
-    base_files: $LOCAL/cylinder/base_files
+    base_files: $LOCAL/base_files
     envs:
       -
         id: 0
@@ -28,25 +28,10 @@ worlds:
         parallel: False
         mods:
           -
-            func: set_viscosity
+            func: set_something
             params:
-                visc: 0.001
-      -
-        id: 1
-        name: env1
-        parallel: False
-        mods:
-          -
-            func: set_viscosity
-            params:
-                visc: 0.002
-      -
-        id: 2
-        name: env2
-        parallel: False
-        mods:
-          -
-            func: set_viscosity
-            params:
-                visc: 0.003
+              str_param: string
+              props:
+                my_prop: 0
+            
         
