@@ -50,7 +50,8 @@ class OrleProcess(object):
                 self.run()
                 # Clean up
                 self.clean()
-                break
+                # All done
+                logger.info('Done processing, job script, resuming surveillance.')
 
     def search(
         self
@@ -151,7 +152,6 @@ class OrleProcess(object):
         Returns:
             bool: Successful setup
         """
-
         runner = FOAMRunner(self.job_config, self.env_dir)
         # Decompose domain
         runner.decompose()
