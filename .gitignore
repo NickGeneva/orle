@@ -147,6 +147,5 @@ dmypy.json
 *.msh
 
 # Misc folders
-cylinder/
 cylinder_world0/
 temp/

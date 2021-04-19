@@ -1,0 +1,129 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  plus                                  |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     pimpleFoam;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         1.0;
+
+deltaT          0.01;
+
+writeControl    timeStep;
+
+writeInterval   50;
+
+purgeWrite      0;
+
+writeFormat     ascii;
+
+writePrecision  6;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   6;
+
+runTimeModifiable true;
+
+
+
+functions
+{
+
+    probes
+    {
+        // Where to load it from
+        functionObjectLibs ( "libsampling.so" );
+
+        type        probes;
+
+        // Name of the directory for probe data
+        name        probes;
+
+        enabled         true;
+        
+        writeControl timeStep;
+        writeInterval 50;
+
+        // Fields to be probed
+        fields (
+                p 
+                U 
+            );
+
+        probeLocations
+        (
+        ( 4.0 -2. 0.05 )
+        ( 4.0 -1. 0.05 )         
+        ( 4.0 0. 0.05 )  
+        ( 4.0 1. 0.05 ) 
+        ( 4.0 2. 0.05 ) 
+        ( 5.0 -2. 0.05 )
+        ( 5.0 -1. 0.05 )         
+        ( 5.0 0. 0.05 )  
+        ( 5.0 1. 0.05 ) 
+        ( 5.0 2. 0.05 )   
+        ( 6.0 -2. 0.05 )
+        ( 6.0 -1. 0.05 )         
+        ( 6.0 0. 0.05 )  
+        ( 6.0 1. 0.05 ) 
+        ( 6.0 2. 0.05 )
+        ( 7.0 -2. 0.05 )
+        ( 7.0 -1. 0.05 )         
+        ( 7.0 0. 0.05 )  
+        ( 7.0 1. 0.05 ) 
+        ( 7.0 2. 0.05 ) 
+        ( 8.0 -2. 0.05 )
+        ( 8.0 -1. 0.05 )         
+        ( 8.0 0. 0.05 )  
+        ( 8.0 1. 0.05 ) 
+        ( 8.0 2. 0.05 )     
+        );
+    }
+
+    forceCoeffs_cylinder
+    {
+        type forces;
+        functionObjectLibs ("libforces.so");
+        enabled true;
+        writeControl timeStep;
+        writeInterval 50;
+        patches
+        (
+            cylinder
+        );
+        log true;
+        rho rhoInf;
+        rhoInf 1.0;
+        CofR (0 0 0);
+        liftDir (0 1 0);
+        dragDir (1 0 0);
+        pitchAxis (0 0 1);
+        magUInf 1.0;
+        lRef 1.0;
+        Aref 0.2;
+    }
+}
+
+
+// ************************************************************************* //
