@@ -1,8 +1,13 @@
-// Gmsh project created on Sun Aug 23 20:19:59 2020
+// Gmsh project created on April 19 2020
+// Name: Flow around a cylinder with jets
+// Author: Nicholas Geneva
+// 
 // Export to .msh version 2 ascii
-// Then use gmshToFoam cylinder_mesh.msh -case ./base_files
+// Then use: gmshToFoam cylinder_mesh.msh -case ./base_files
+// Set up cyclic boundaries in the polymesh/boundaries
 SetFactory("OpenCASCADE");
 
+// Resolution parameters
 cp = 40;
 sp = 2;
 sw = 0.02;

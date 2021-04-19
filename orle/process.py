@@ -8,6 +8,8 @@ logger = logging.getLogger(__name__)
 from typing import Dict, List, Tuple, Union 
 from filelock import Timeout, FileLock
 from .builders import EnvironmentBuilder
+from .foam import FOAMRunner
+from .collectors import DataCollector
 
 Config = Union[Dict, List, Tuple]
 
@@ -26,6 +28,7 @@ class OrleProcess(object):
         self.config = world_config
         self.lock = None
         self.job_file = None
+        self.job_config = None
         self.env_dir = None
 
     def start(
@@ -37,6 +40,7 @@ class OrleProcess(object):
         Args:
             dt (int, optional): Sleep interval between . Defaults to 0.1.
         """
+        logger.info('Starting surveillance for job configs.')
         while True:
             # Sleep process before checking for config file again
             time.sleep(dt + 0.001*random.random())
@@ -46,8 +50,7 @@ class OrleProcess(object):
                 self.run()
                 # Clean up
                 self.clean()
-
-            break
+                break
 
     def search(
         self
@@ -86,18 +89,40 @@ class OrleProcess(object):
         output_flag = self.job_setup()
         if not output_flag:
             logger.error('Failed job set up, terminating run')
+            return
 
         output_flag = self.job_sim()
         if not output_flag:
             logger.error('Failed job execution, terminating run')
+            return
+
+        output_flag = self.job_post()
+        if not output_flag:
+            logger.error('Failed post processing, terminating run')
+            return
 
     def clean(
         self
     ) -> None:
         """Cleans up environment and config
-        TODO: Implement
         """
-        pass
+        logger.error('Cleaning up job.')
+        # Rename job file to keep in history
+        old_count = 0
+        for (dirpath, _, filenames) in os.walk(self.config['job_dir']):
+            for filename in filenames:
+                file_path = os.path.join(dirpath, filename)
+                if file_path.startswith(self.job_file+".old"):
+                    old_count += 1
+
+        os.rename(self.job_file, self.job_file+".old.{:d}".format(old_count))
+
+        # Now release lock
+        # Need to force because of double acquire
+        self._lock_counter = 1
+        self.lock.release(force = True)
+        os.remove(self.lock._lock_file)
+        self.lock = None
 
     def job_setup(
         self
@@ -110,11 +135,12 @@ class OrleProcess(object):
         logger.info('Setting up environment folder.')
         env_builder = EnvironmentBuilder(self.job_file, self.config)
         self.env_dir = env_builder.env_dir
+        self.job_config = env_builder.config
         # Make sure necessary params are in the config
         if not env_builder.validate_config():
             return False
 
-        logger.info('Valid job config file file loaded. Building environment folder.')
+        logger.info('Valid job config file file loaded. Setting up environment folder.')
         return env_builder.setup_env()
 
     def job_sim(
@@ -126,4 +152,28 @@ class OrleProcess(object):
             bool: Successful setup
         """
 
+        runner = FOAMRunner(self.job_config, self.env_dir)
+        # Decompose domain
+        runner.decompose()
+        # Run simulation
+        runner.run()
+        # Reconstruct domain if needed
+        runner.reconstruct()
+
         return True
+
+    def job_post(
+        self
+    ) -> bool:
+        """Runs openfoam simulation
+
+        Returns:
+            bool: Successful setup
+        """
+
+        collector = DataCollector(self.job_config, self.env_dir, self.config['output_dir'])
+
+        # Collect data
+        out = collector.collect()
+
+        return out

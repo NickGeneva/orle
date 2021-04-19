@@ -275,10 +275,17 @@ class EnvironmentBuilder(object):
             return False
         
         # Required keys
-        req_keys = ['id', 'name', 'hash', 'solver', 'np', 'mods']
+        req_keys = ['id', 'name', 'hash', 'params', 'mods', 'post']
         for key in req_keys:
             if not key in self.config.keys():
                 logger.error('Required parameter {:s} not in config.'.format(key))
+                return False
+
+        # Check necessary simulation params
+        req_keys = ['solver', 'np', 'args']
+        for key in req_keys:
+            if not key in self.config['params'].keys():
+                logger.error('Required simulation parameter params/{:s} not in config.'.format(key))
                 return False
 
         # Check mods
@@ -312,7 +319,7 @@ class EnvironmentBuilder(object):
         Returns:
             Config: Initialized world configuration
         """
-         # Create each environment in the world
+        # Run each modification function for this environment
         cleared = 1
         for mod in self.config['mods']:
             # Check mod is supported
@@ -347,7 +354,7 @@ class EnvironmentBuilder(object):
 
         # Get start time
         for line in lines:
-            if "startTime" in line:
+            if line.lstrip().startswith("startTime"):
                 start_time = float(re.findall(r'\d+', line)[0])
                 break
         

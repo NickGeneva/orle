@@ -1,5 +1,5 @@
 # =====================================
-# OpenFOAM Reinforcement Learning Environment (ORLE) Universe Config
+# OpenFOAM Reinforcement Learning Environment (ORLE) Job Config
 # 
 # This configuration files should be used to define different worlds 
 # and environments that exist in the learning universe.
@@ -12,19 +12,32 @@ id: 0
 name: cylinder
 hash: 0
 
+params:
+  solver: pimpleFoam
+  np: 1
+  args: ''
+
 mods:
   -
     func: set_control_dict
     params:
-      startTime: 0
-      endTime: 10
-      writeInterval: 50
+      props:
+        startTime: 0
+        endTime: 1.0
+        writeInterval: 100
   -
     func: set_boundary
     params:
       field: U
       boundary: jet1
       time_step: 0
-      prop:
+      props:
         type: fixedValue
         value: uniform(-1 0 0)
+
+post:
+  -
+    func: get_forces
+    params:
+      boundary: cylinder
+      time_step: 0

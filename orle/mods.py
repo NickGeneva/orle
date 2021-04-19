@@ -8,7 +8,58 @@ FUNCTION_SUCCESS = True
 FUNCTION_ERROR = False
 
 class OpenFoamMods:
+    """Stores different modification functions for openFOAM simulations
+    """
     
+    @classmethod
+    def set_control_dict(
+        cls,
+        props,
+        env_dir:str
+    ) -> bool:
+        """Sets core parameters in the control dictionary of simulation.
+        This method only edits parameters, it will not add new parameters.
+
+        Args:
+            props (Dict): Props to change in the control dict. These props
+            must exist in the controlDict to be changed.
+
+        Returns:
+            bool: Successful modification
+        """
+        logger.info('Setting controlDict parameters.')
+
+        control_file = os.path.join(env_dir, 'system', 'controlDict')
+
+        if not os.path.exists(control_file):
+            logger.error('Could not find controlDict file to edit.')
+            return FUNCTION_ERROR
+
+        # Read in lines
+        with open(control_file, 'r') as file:
+            lines = file.readlines() 
+
+        # Edit props in control dict
+        output = FUNCTION_SUCCESS
+        for k, v in props.items():
+            edited = False
+            for i, line in enumerate(lines):
+                if line.lstrip().startswith(k):
+                    print(line)
+                    lines[i] = "{:s}\t\t\t{:s};\n".format(k, str(v))
+                    edited = True
+                    break
+
+            if not edited:
+                logger.warn('Prop {:s} not present in control dict.'.format(k))
+                output = FUNCTION_ERROR
+
+        # Write to file
+        with open(control_file, 'w') as file:
+            file.writelines(lines)
+
+        return output
+
     @classmethod
     def set_viscosity(
         cls,
@@ -22,8 +73,10 @@ class OpenFoamMods:
             env_dir (str): Path to OpenFOAM simulation folder
 
         Returns:
-            bool: Successfull modification
+            bool: Successful modification
         """
+        logger.info('Setting viscosity.')
+
         transport_file = os.path.join(env_dir, 'constant', 'transportProperties')
 
         if not os.path.exists(transport_file):
@@ -45,53 +98,6 @@ class OpenFoamMods:
 
         return FUNCTION_SUCCESS
 
-
-    @classmethod
-    def set_control_dict(
-        cls,
-        props,
-        env_dir:str
-    ) -> bool:
-        """Sets core parameters in the control dictionary of simulation.
-        This method only edits parameters, it will not add new parameters.
-
-        Args:
-            props (Dict): Props to change in the control dict. These props
-            must exist in the controlDict to be changed.
-
-        Returns:
-            bool: Successfull modification
-        """
-        control_file = os.path.join(env_dir, 'system', 'controlDict')
-
-        if not os.path.exists(control_file):
-            logger.error('Could not find controlDict file to edit.')
-            return FUNCTION_ERROR
-
-        # Read in lines
-        with open(control_file, 'r') as file:
-            lines = file.readlines() 
-
-        # Edit props in control dict
-        output = FUNCTION_SUCCESS
-        for k, v in props.items():
-            edited = False
-            for i, line in enumerate(lines):
-                if k in line:
-                    lines[i] = "{:s}\t\t\t{:s};\n".format(k, str(v))
-                    edited = True
-                    break
-
-            if not edited:
-                logger.warn('Prop {:s} not present in control dict.'.format(k))
-                output = FUNCTION_ERROR
-
-        # Write to file
-        with open(control_file, 'w') as file:
-            file.writelines(lines)
-
-        return output
-
     @classmethod
     def set_boundary(
         cls,
@@ -112,8 +118,10 @@ class OpenFoamMods:
             env_dir (str): Path to OpenFOAM simulation folder
 
         Returns:
-            bool: Successfull modification
+            bool: Successful modification
         """
+        logger.info('Setting {:s} boundary {:s} parameters.'.format(field, boundary))
+
         field_file = os.path.join(env_dir, '{:g}'.format(time_step), field)
 
         if not os.path.exists(field_file):

@@ -10,6 +10,7 @@ Config = Union[Dict, List, Tuple]
 
 class FOAMRunner(object):
     """Interfaces with OpenFOAM library
+    TODO: Change config input to file path and then load it inside of class? Maybe
     TODO: Validate parallel
     Args:
         config (Config): environment job config
@@ -30,7 +31,7 @@ class FOAMRunner(object):
     ) -> None:
         """Decomposes fluid simulation domain into sub folders
         """
-        if self.config['np'] == 1:
+        if self.config['params']['np'] == 1:
             logger.warn('Using only 1 process, no need to decompose.')
             return
         # Run openfoam command
@@ -45,18 +46,21 @@ class FOAMRunner(object):
         """Runs the OpenFOAM simulation
         """
         # Single core
-        if self.config['np'] == 1:
-            logger.warn('Running {:s} on single thread.'.format(self.config['solver']))
+        if self.config['params']['np'] == 1:
+            logger.warn('Running {:s} on single thread.'.format(self.config['params']['solver']))
             owd = os.getcwd()
             os.chdir(self.dir)
-            os.system(self.config['solver'])
+            os.system("{:s} {:s}".format(self.config['params']['solver'], 
+                    self.config['params']['args']))
             os.chdir(owd)
         # Parallel
         else:
-            logger.warn('Running {:s} in parallel.'.format(self.config['solver']))
+            logger.warn('Running {:s} in parallel.'.format(self.config['params']['solver']))
             owd = os.getcwd()
             os.chdir(self.dir)
-            os.system("mpirun -np {:d} {:s} -parallel".format(self.config['np'], self.config['solver']))
+            os.system("mpirun -np {:d} {:s} -parallel {:s}".format(
+                    self.config['params']['np'], self.config['params']['solver'], 
+                    self.config['params']['args']))
             os.chdir(owd)
     
     def reconstruct(
@@ -65,7 +69,7 @@ class FOAMRunner(object):
         """Reconstructs OpenFOAM field from parallel folders
         TODO: Figure out good way of controlling this (not all parallel sims need reconstruction)
         """
-        if self.config['np'] == 1:
+        if self.config['params']['np'] == 1:
             logger.warn('Using only 1 process, no need to reconstruct.')
             return
         
