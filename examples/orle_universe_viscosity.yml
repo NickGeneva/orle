@@ -20,7 +20,7 @@ worlds:
     world_dir: $LOCAL/cylinder_world0
     job_dir: $WORLD/configs
     output_dir: $WORLD/output
-    base_files: $LOCAL/cylinder/base_files
+    base_files: $LOCAL/../base_files/cylinder
     envs:
       -
         id: 0
