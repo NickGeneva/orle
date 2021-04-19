@@ -5,6 +5,7 @@ Ideally multiple of these programs should run at the same time simulating
 multiple environments in the assigned world.
 """
 import sys
+sys.path.append('..')
 import os
 import logging
 from orle import Parser, WorldBuilder, OrleProcess
