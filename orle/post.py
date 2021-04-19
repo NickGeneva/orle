@@ -81,15 +81,16 @@ class OpenFoamPost:
         times = []
         forces = []
         for _, line in enumerate(lines):
-            # Process line if not comment
-            if not line.startswith('#') and line.split(' ')[0].isnumeric():
+            # Process line if not comment and first word is a valid number (time-step)
+            if not line.startswith('#') and line.split(' ')[0].replace('.','',1).isnumeric():
                 # Get time-step
                 times.append(float(line.split(' ')[0])) 
                 
                 # Build nested list of force data
-                sIdx = line.find('(') + 1
-                eIdx = line.rfind(')')
-                forces.append( para_search(lines[sIdx:eIdx])[0] )
+                sIdx = line.find('(')
+                eIdx = line.rfind(')')+1
+                force_step, _ = para_search(line[sIdx:eIdx])
+                forces.append( force_step )
 
-        return {'time': np.array(times), 'forces':np.array(forces)}
+        return {'times': np.array(times), 'forces':np.array(forces)}
                         
