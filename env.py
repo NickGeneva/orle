@@ -1,7 +1,7 @@
 import sys
 import os
 import logging
-from orle import Parser, WorldBuilder, EnvironmentBuilder
+from orle import Parser, WorldBuilder, OrleProcess
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,11 @@ if __name__ == '__main__':
     wrld_builder.setup_world(args.world_id, args.overwrite_world)
     wrld_config = wrld_builder.get_world_config(args.world_id)
 
-    env_builder = EnvironmentBuilder(os.path.join(wrld_config['config_dir'], 'orle_env0.yml'), wrld_config)
-    out = env_builder.setup_env()
-    print(out)
+
+    proc = OrleProcess(wrld_config)
+    proc.start()
+
+    # env_builder = EnvironmentBuilder(os.path.join(wrld_config['config_dir'], 'orle_env0.yml'), wrld_config)
+    # out = env_builder.setup_env()
+    # print(out)
 

@@ -121,7 +121,7 @@ class WorldBuilder(object):
         # Check if folders exist
         if not os.path.exists(world_config['world_dir']):
             return False
-        if not os.path.exists(world_config['config_dir']):
+        if not os.path.exists(world_config['job_dir']):
             return False
         if not os.path.exists(world_config['output_dir']):
             return False
@@ -163,7 +163,7 @@ class WorldBuilder(object):
 
         # Create world directory
         world_files = os.path.join(world_config['world_dir'], 'base_files')
-        mkdirs(world_config['world_dir'], world_config['config_dir'], world_config['output_dir'], world_files)
+        mkdirs(world_config['world_dir'], world_config['job_dir'], world_config['output_dir'], world_files)
 
         # Copy basefiles into world folder
         logger.info('Copying base files into world.')
@@ -201,7 +201,7 @@ class EnvironmentBuilder(object):
     """Builds environment for running
 
     Args:
-        config_file_path (str): Path to environment configuration file
+        config_file_path (str): Path to environment job configuration file
         world_config (Config): Initialized world configuration
     """
 
@@ -214,7 +214,6 @@ class EnvironmentBuilder(object):
         """
         self.config = self.parse_config(config_file_path)
         self.get_env_dir(world_config)
-        self.id = self.config['id']
 
     def parse_config(
         self,
@@ -224,7 +223,7 @@ class EnvironmentBuilder(object):
         containing the configuration.
 
         Args:
-            config_file_path (str): path to universe configuration file
+            config_file_path (str): path to environment job configuration file
 
         Returns:
             Config: Python config object
@@ -237,7 +236,7 @@ class EnvironmentBuilder(object):
                 logger.info( 'Parsed environment config file: {:s}; h.{:d}'.format(
                         config['name'], config['hash']) )
             except yaml.YAMLError as exc:
-                logger.error('Error reading the environment configuration file!')
+                logger.error('Error reading the environment job configuration file!')
                 logger.error(exc)
 
         return config
@@ -262,6 +261,33 @@ class EnvironmentBuilder(object):
         if self.env_dir is None:
             logger.error('Environment ID {:d} not present in universe config file.'.format(self.config['id']))
             raise LookupError('Invalid id')
+
+    def validate_config(
+        self
+    ) -> bool:
+        """Validates config file by making sure needed params are present
+
+        Returns:
+            bool: If loaded configuration file is valid for environment
+        """
+        if not isinstance(self.config, dict):
+            logger.error('Loaded environment config is not a dictionary.')
+            return False
+        
+        # Required keys
+        req_keys = ['id', 'name', 'hash', 'mods']
+        for key in req_keys:
+            if not key in self.config.keys():
+                logger.error('Required parameter {:s} not in config.'.format(key))
+                return False
+
+        # Check mods
+        for mod in self.config['mods']:
+            if not hasattr(OpenFoamMods, mod['func']):
+                logger.error('Mod {:s} not currently supported.'.format(mod['func']))
+                return False
+
+        return True
 
     def setup_env(
         self
