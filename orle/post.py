@@ -65,11 +65,11 @@ class OpenFoamPost:
 
 
         force_file = os.path.join(_env_dir, 'postProcessing', 'forceCoeffs_{:s}'.format(boundary), 
-                        '{:d}'.format(time_step), 'forces.dat')
+                        '{:g}'.format(time_step), 'forces.dat')
 
         if not os.path.exists(force_file):
             sub_folder = os.path.join('postProcessing', 'forceCoeffs_{:s}'.format(boundary), 
-                            '{:d}'.format(time_step))
+                            '{:g}'.format(time_step))
             logger.error('Could not find forces.dat file to in {:s}.'.format(sub_folder))
             return FUNCTION_ERROR
 

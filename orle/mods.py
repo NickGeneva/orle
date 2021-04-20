@@ -45,7 +45,6 @@ class OpenFoamMods:
             edited = False
             for i, line in enumerate(lines):
                 if line.lstrip().startswith(k):
-                    print(line)
                     lines[i] = "{:s}\t\t\t{:s};\n".format(k, str(v))
                     edited = True
                     break

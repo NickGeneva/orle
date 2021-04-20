@@ -146,15 +146,15 @@ class WorldBuilder(object):
 
         Args:
             world_config (Config): Configuration object of the world
-
-        Returns:
-            bool: World is built
         """
+        if not os.path.exists(world_config['world_dir']):
+            return
+
         try:
             logger.warn('Deleting world contents.')
             rmtree(world_config['world_dir'])
         except OSError as e:
-            logger.error('Error deleting world contents: {:s}'.format(e.strerror))
+            logger.warn('Issue deleting world contents: {:s}'.format(e.strerror))
 
     def build_world(
         self,
