@@ -3,46 +3,48 @@
 // Author: Nicholas Geneva
 // 
 // Export to .msh version 2 ascii
-// Then use: gmshToFoam cylinder_mesh.msh -case ./base_files
+// Then use: gmshToFoam cylinder_mesh.msh -case ./cylinder
 // Set up cyclic boundaries in the polymesh/boundaries
 SetFactory("OpenCASCADE");
 
 // Resolution parameters
 cp = 40;
-sp = 2;
-sw = 0.02;
+sp = 4;
 r = 1.0;
 r2 = 2.0;
+sw = 10/180;
 sres = 25; //Sensor area
 outres  = 25; //Outer area
 
-//+
+// Jets to be placed on 75, 105, 255, 285 deg
+// Jets will have a width of 10*rad
+// See https://arxiv.org/pdf/2004.12417.pdf
 Point(1) = {0, 0, 0, 1.0};
 //+
 // Create cylinder
 Point(2) = {r, 0.0, 0, 1.0};
 //+
-Point(3) = {r*Cos(Pi/4 - sw/r), r*Sin(Pi/4 - sw/r), 0, 1.0};
+Point(3) = {r*Cos(75*Pi/180 - sw), r*Sin(75*Pi/180 - sw), 0, 1.0};
 //+
-Point(4) = {r*Cos(Pi/4 + sw/r), r*Sin(Pi/4 + sw/r), 0, 1.0};
+Point(4) = {r*Cos(75*Pi/180 + sw), r*Sin(75*Pi/180 + sw), 0, 1.0};
 //+
 Point(5) = {0.0, 1.0, 0, 1.0};
 //+
-Point(6) = {r*Cos(3*Pi/4 - sw/r), r*Sin(3*Pi/4 - sw/r), 0, 1.0};
+Point(6) = {r*Cos(105*Pi/180 - sw), r*Sin(105*Pi/180 - sw), 0, 1.0};
 //+
-Point(7) = {r*Cos(3*Pi/4 + sw/r), r*Sin(3*Pi/4 + sw/r), 0, 1.0};
+Point(7) = {r*Cos(105*Pi/180 + sw), r*Sin(105*Pi/180 + sw), 0, 1.0};
 //+
 Point(8) = {-1.0, 0.0, 0, 1.0};
 //+
-Point(9) = {r*Cos(5*Pi/4 - sw/r), r*Sin(5*Pi/4 - sw/r), 0, 1.0};
+Point(9) = {r*Cos(255*Pi/180 - sw), r*Sin(255*Pi/180 - sw), 0, 1.0};
 //+
-Point(10) = {r*Cos(5*Pi/4 + sw/r), r*Sin(5*Pi/4 + sw/r), 0, 1.0};
+Point(10) = {r*Cos(255*Pi/180 + sw), r*Sin(255*Pi/180 + sw), 0, 1.0};
 //+
 Point(11) = {0.0, -1.0, 0, 1.0};
 //+
-Point(12) = {r*Cos(7*Pi/4 - sw/r), r*Sin(7*Pi/4 - sw/r), 0, 1.0};
+Point(12) = {r*Cos(285*Pi/180 - sw), r*Sin(285*Pi/180 - sw), 0, 1.0};
 //+
-Point(13) = {r*Cos(7*Pi/4 + sw/r), r*Sin(7*Pi/4 + sw/r), 0, 1.0};
+Point(13) = {r*Cos(285*Pi/180 + sw), r*Sin(285*Pi/180 + sw), 0, 1.0};
 //+
 Circle(1) = {2, 1, 3};
 //+
@@ -68,35 +70,36 @@ Circle(11) = {12, 1, 13};
 //+
 Circle(12) = {13, 1, 2};
 
-// Number of points on curves, should be even for jets to be placed on 45s
-Transfinite Curve {1, 3, 4, 6, 7, 9, 10, 12} = cp/2 Using Progression 1.0;
+// Number of points on curves
+Transfinite Curve {1, 6, 7, 12} = (75/90)*cp Using Progression 1.0;
+Transfinite Curve {3, 4, 9, 10} = (15/90)*cp Using Progression 1.0;
 
 Transfinite Curve {2, 5, 8, 11} = sp Using Progression 1.0;
 
 // Outer cylinder
 Point(14) = {r2, 0.0, 0, 1.0};
 //+
-Point(15) = {r2*Cos(Pi/4 - sw/r2), r2*Sin(Pi/4 - sw/r2), 0, 1.0};
+Point(15) = {r2*Cos(75*Pi/180 - sw), r2*Sin(75*Pi/180 - sw), 0, 1.0};
 //+
-Point(16) = {r2*Cos(Pi/4 + sw/r2), r2*Sin(Pi/4 + sw/r2), 0, 1.0};
+Point(16) = {r2*Cos(75*Pi/180 + sw), r2*Sin(75*Pi/180 + sw), 0, 1.0};
 //+
 Point(17) = {0.0, r2, 0, 1.0};
 //+
-Point(18) = {r2*Cos(3*Pi/4 - sw/r2), r2*Sin(3*Pi/4 - sw/r2), 0, 1.0};
+Point(18) = {r2*Cos(105*Pi/180 - sw), r2*Sin(105*Pi/180 - sw), 0, 1.0};
 //+
-Point(19) = {r2*Cos(3*Pi/4 + sw/r2), r2*Sin(3*Pi/4 + sw/r2), 0, 1.0};
+Point(19) = {r2*Cos(105*Pi/180 + sw), r2*Sin(105*Pi/180 + sw), 0, 1.0};
 //+
 Point(20) = {-r2, 0.0, 0, 1.0};
 //+
-Point(21) = {r2*Cos(5*Pi/4 - sw/r2), r2*Sin(5*Pi/4 - sw/r2), 0, 1.0};
+Point(21) = {r2*Cos(255*Pi/180 - sw), r2*Sin(255*Pi/180 - sw), 0, 1.0};
 //+
-Point(22) = {r2*Cos(5*Pi/4 + sw/r2), r2*Sin(5*Pi/4 + sw/r2), 0, 1.0};
+Point(22) = {r2*Cos(255*Pi/180 + sw), r2*Sin(255*Pi/180 + sw), 0, 1.0};
 //+
 Point(23) = {0.0, -r2, 0, 1.0};
 //+
-Point(24) = {r2*Cos(7*Pi/4 - sw/r2), r2*Sin(7*Pi/4 - sw/r2), 0, 1.0};
+Point(24) = {r2*Cos(285*Pi/180  - sw), r2*Sin(285*Pi/180  - sw), 0, 1.0};
 //+
-Point(25) = {r2*Cos(7*Pi/4 + sw/r2), r2*Sin(7*Pi/4 + sw/r2), 0, 1.0};
+Point(25) = {r2*Cos(285*Pi/180 + sw), r2*Sin(285*Pi/180  + sw), 0, 1.0};
 //+
 Circle(13) = {14, 1, 15};
 //+
@@ -122,8 +125,9 @@ Circle(23) = {24, 1, 25};
 //+
 Circle(24) = {25, 1, 14};
 
-// Number of points on curves, should be even for jets to be placed on 45s
-Transfinite Curve {13, 15, 16, 18, 19, 21, 22, 24} = cp/2 Using Progression 1.0;
+// Number of points on curves
+Transfinite Curve {13, 18, 19, 24} = (75/90)*cp Using Progression 1.0;
+Transfinite Curve {15, 16, 21, 22} = (15/90)*cp Using Progression 1.0;
 
 Transfinite Curve {14, 17, 20, 23} = sp Using Progression 1.0;
 
@@ -254,13 +258,13 @@ Curve Loop(68) = {111, 100, 109, 110};
 Plane Surface(68) = {68, 67};
 
 // Outer box
-Point(76) = {-5, 5, 0, 1.0};
+Point(76) = {-4, 4.2, 0, 1.0};
 //+
-Point(77) = {-5, -5, 0, 1.0};
+Point(77) = {-4, -4, 0, 1.0};
 //+
-Point(78) = {30, -5, 0, 1.0};
+Point(78) = {40, -4, 0, 1.0};
 //+
-Point(79) = {30, 5, 0.0, 1.0};
+Point(79) = {40, 4.2, 0.0, 1.0};
 //+
 Line(144) = {76, 79};
 //+

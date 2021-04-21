@@ -27,7 +27,7 @@ mods:
 
 post:
   -
-    func: set_data
+    func: get_data
     params:
       my_param: 1
     

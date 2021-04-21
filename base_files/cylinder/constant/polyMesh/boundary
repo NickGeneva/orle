@@ -22,72 +22,72 @@ FoamFile
         type    cyclic;
         inGroups    1(cyclic);
         neighbourPatch  cyclic2;
-        nFaces          10954;
-        startFace       18325;
+        nFaces          9568;
+        startFace       16282;
     }
     cyclic2
     {
         type    cyclic;
         inGroups    1(cyclic);
         neighbourPatch  cyclic1;
-        nFaces          10954;
-        startFace       29279;
+        nFaces          9568;
+        startFace       25850;
     }
     cylinder
     {
         type    wall;
         inGroups    1(wall);
-        nFaces          152;
-        startFace       40233;
+        nFaces          148;
+        startFace       35418;
     }
     jet3
     {
         type            patch;
         physicalType    patch;
-        nFaces          1;
-        startFace       40385;
+        nFaces          3;
+        startFace       35566;
     }
     jet2
     {
         type            patch;
         physicalType    patch;
-        nFaces          1;
-        startFace       40386;
+        nFaces          3;
+        startFace       35569;
     }
     jet1
     {
         type            patch;
         physicalType    patch;
-        nFaces          1;
-        startFace       40387;
+        nFaces          3;
+        startFace       35572;
     }
     jet4
     {
         type            patch;
         physicalType    patch;
-        nFaces          1;
-        startFace       40388;
+        nFaces          3;
+        startFace       35575;
     }
     wall
     {
         type    wall;
         inGroups    1(wall);
         nFaces          148;
-        startFace       40389;
+        startFace       35578;
     }
     inlet
     {
         type            patch;
         physicalType    patch;
         nFaces          24;
-        startFace       40537;
+        startFace       35726;
     }
     outlet
     {
         type            patch;
         physicalType    patch;
         nFaces          24;
-        startFace       40561;
+        startFace       35750;
     }
 )
 
