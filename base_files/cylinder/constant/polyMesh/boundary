@@ -22,72 +22,72 @@ FoamFile
         type    cyclic;
         inGroups    1(cyclic);
         neighbourPatch  cyclic2;
-        nFaces          9568;
-        startFace       16282;
+        nFaces          9496;
+        startFace       16174;
     }
     cyclic2
     {
         type    cyclic;
         inGroups    1(cyclic);
         neighbourPatch  cyclic1;
-        nFaces          9568;
-        startFace       25850;
+        nFaces          9496;
+        startFace       25670;
     }
     cylinder
     {
         type    wall;
         inGroups    1(wall);
         nFaces          148;
-        startFace       35418;
+        startFace       35166;
     }
     jet3
     {
         type            patch;
         physicalType    patch;
         nFaces          3;
-        startFace       35566;
+        startFace       35314;
     }
     jet2
     {
         type            patch;
         physicalType    patch;
         nFaces          3;
-        startFace       35569;
+        startFace       35317;
     }
     jet1
     {
         type            patch;
         physicalType    patch;
         nFaces          3;
-        startFace       35572;
+        startFace       35320;
     }
     jet4
     {
         type            patch;
         physicalType    patch;
         nFaces          3;
-        startFace       35575;
+        startFace       35323;
     }
     wall
     {
         type    wall;
         inGroups    1(wall);
         nFaces          148;
-        startFace       35578;
+        startFace       35326;
     }
     inlet
     {
         type            patch;
         physicalType    patch;
         nFaces          24;
-        startFace       35726;
+        startFace       35474;
     }
     outlet
     {
         type            patch;
         physicalType    patch;
         nFaces          24;
-        startFace       35750;
+        startFace       35498;
     }
 )
 

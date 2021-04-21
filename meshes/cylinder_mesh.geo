@@ -10,8 +10,8 @@ SetFactory("OpenCASCADE");
 // Resolution parameters
 cp = 40;
 sp = 4;
-r = 1.0;
-r2 = 2.0;
+r = 0.05;
+r2 = 0.1;
 sw = 10/180;
 sres = 25; //Sensor area
 outres  = 25; //Outer area
@@ -28,19 +28,19 @@ Point(3) = {r*Cos(75*Pi/180 - sw), r*Sin(75*Pi/180 - sw), 0, 1.0};
 //+
 Point(4) = {r*Cos(75*Pi/180 + sw), r*Sin(75*Pi/180 + sw), 0, 1.0};
 //+
-Point(5) = {0.0, 1.0, 0, 1.0};
+Point(5) = {0.0, r, 0, 1.0};
 //+
 Point(6) = {r*Cos(105*Pi/180 - sw), r*Sin(105*Pi/180 - sw), 0, 1.0};
 //+
 Point(7) = {r*Cos(105*Pi/180 + sw), r*Sin(105*Pi/180 + sw), 0, 1.0};
 //+
-Point(8) = {-1.0, 0.0, 0, 1.0};
+Point(8) = {-r, 0.0, 0, 1.0};
 //+
 Point(9) = {r*Cos(255*Pi/180 - sw), r*Sin(255*Pi/180 - sw), 0, 1.0};
 //+
 Point(10) = {r*Cos(255*Pi/180 + sw), r*Sin(255*Pi/180 + sw), 0, 1.0};
 //+
-Point(11) = {0.0, -1.0, 0, 1.0};
+Point(11) = {0.0, -r, 0, 1.0};
 //+
 Point(12) = {r*Cos(285*Pi/180 - sw), r*Sin(285*Pi/180 - sw), 0, 1.0};
 //+
@@ -210,13 +210,13 @@ Transfinite Surface {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
 Recombine Surface {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
 
 // Sensor Region
-Point(50) = {3, 3, 0, 1.0};
+Point(50) = {0.15, 0.15, 0, 1.0};
 //+
-Point(51) = {6, 3, 0, 1.0};
+Point(51) = {0.3, 0.15, 0, 1.0};
 //+
-Point(52) = {3, -3, 0, 1.0};
+Point(52) = {0.15, -0.15, 0, 1.0};
 //+
-Point(53) = {6, -3, 0, 1.0};
+Point(53) = {0.3, -0.15, 0, 1.0};
 //+
 Line(97) = {50, 51};
 //+
@@ -239,9 +239,9 @@ Transfinite Surface {61};
 Recombine Surface {61};
 
 // Box around cylinder
-Point(58) = {-3, 3, 0, 1.0};
+Point(58) = {-0.15, 0.15, 0, 1.0};
 //+
-Point(59) = {-3, -3, 0, 1.0};
+Point(59) = {-0.15, -0.15, 0, 1.0};
 //+
 Line(109) = {50, 58};
 //+
@@ -258,13 +258,13 @@ Curve Loop(68) = {111, 100, 109, 110};
 Plane Surface(68) = {68, 67};
 
 // Outer box
-Point(76) = {-4, 4.2, 0, 1.0};
+Point(76) = {-0.2, 0.21, 0, 1.0};
 //+
-Point(77) = {-4, -4, 0, 1.0};
+Point(77) = {-0.2, -0.2, 0, 1.0};
 //+
-Point(78) = {40, -4, 0, 1.0};
+Point(78) = {2, -0.2, 0, 1.0};
 //+
-Point(79) = {40, 4.2, 0.0, 1.0};
+Point(79) = {2, 0.21, 0.0, 1.0};
 //+
 Line(144) = {76, 79};
 //+
@@ -284,7 +284,7 @@ Curve Loop(88) = {146, 147, 144, 145};
 Plane Surface(87) = {88, 87};
 
 
-Extrude {0, 0, 0.1} {
+Extrude {0, 0, 0.01} {
   Surface{10}; Surface{11}; Surface{12}; Surface{1}; Surface{2}; Surface{4}; Surface{5}; Surface{6}; Surface{7}; Surface{8}; Surface{9}; Surface{68}; Surface{61}; Surface{87}; Surface{3}; 
   Layers {1}; 
   Recombine;
