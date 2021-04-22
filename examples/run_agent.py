@@ -128,15 +128,15 @@ class ORLE_Helper(object):
         steps: int ,
         normal = [1, 0, 0]
     ) -> str:
-        """Creates a simple velocity ramp table for OpenFOAM boundary
+        """Creates a simple linear velocity ramp table for OpenFOAM boundary
 
         Args:
-            start_time (float): [description]
-            end_time (float): [description]
-            start_vmag (float): [description]
-            end_vmag (float): [description]
-            steps (int): [description]
-            normal (list, optional): [description]. Defaults to [1, 0, 0].
+            start_time (float): start time of velocity ramp
+            end_time (float): end time of velocity ramp
+            start_vmag (float): starting magnitude
+            end_vmag (float): ending magnitude]
+            steps (int): number of steps in time range
+            normal (list, optional): normal direction of velocity component. Defaults to [1, 0, 0].
 
         Returns:
             (str): table for OpenFOAM field file
