@@ -51,9 +51,13 @@ class ORLE_Helper(object):
             jet4_table (str): jet 4 boundary velocity table
             env_id (int, optional): Environment id. Defaults to 0.
             job_hash (int, optional): Unique identifier for this job. Defaults to random int.
+
+
+        Returns:
+            (str): job hash id
         """
         if job_hash is None:
-            job_hash = random.randint(0, 100000)
+            job_hash = str(random.randint(0, 1000000))
 
         # Make config object
         control_dict = {
@@ -113,8 +117,7 @@ class ORLE_Helper(object):
             with open(config_file, 'w') as file:
                 yaml.dump(config, file, default_flow_style=False)
 
-        output_filenames = ["forces{:d}.npy".format(job_hash)]
-        return output_filenames
+        return job_hash
 
     def calc_velocity_table(
         self,
@@ -150,13 +153,13 @@ class ORLE_Helper(object):
 
     def watch(
         self,
-        output_files: List,
+        jobs: List,
         dt: float = 0.1
     ):
         """Watches output folder
 
         Args:
-            output_files (List): List of file names to watch for only proceed when all are present
+            jobs (List): List of job ids to look for
             dt (float, optional): Sleep interval
         """
         logger.info('Watching for output files.')
@@ -173,6 +176,7 @@ class ORLE_Helper(object):
             filenames = [f for f in os.listdir(self.output_dir) \
                 if os.path.isfile(os.path.join(self.output_dir, f))]
 
+            output_files = ['output{:s}.yml'.format(job_id) for job_id in jobs]
             for file in output_files:
                 # If output file is not in output directory, we need to wait more.
                 if not file in filenames:
@@ -183,26 +187,42 @@ class ORLE_Helper(object):
 
     def read_outputs(
         self,
-        file_names: List
+        jobs: List
     ) -> List:
         """Reads in numpy output files from ORLE
 
         Args:
-            file_names (List): List of file names
+            jobs (List): List of job ids
 
         Returns:
             List: List of numpy arrays
         """
         arrays = []
 
-        for file in file_names:
-            file_path = os.path.join(self.output_dir, file)
-            arrays.append(np.load(file_path, allow_pickle = True))
+        for job in jobs:
+            output_path = os.path.join(self.output_dir, "output{:s}.yml".format(job))
+            with open(output_path, 'r') as stream:
+                try:
+                    output = yaml.safe_load(stream)
+                    logger.info( 'Loaded output file for job {:s}'.format(job) )
+                    logger.info( 'Job exited with status {:d} and produced {:d} output files'.format(int(output['status']), len(output['files'])) )
+                except yaml.YAMLError as exc:
+                    logger.error('Error reading the output file!')
+                    logger.error(exc)
+                    output = None
+
+            # If we could read the output log and the environment ended with out errors
+            # read in data files.
+            if output and output['status'] == 1:
+                for file in output['files']:
+                    if 'forces' in file:
+                        file_path = os.path.join(self.output_dir, file)
+                        arrays.append(np.load(file_path, allow_pickle = True))
 
         return arrays
 
 
-class Phoo_Model(object):
+class Foo_Model(object):
 
     vel_mags = [1, 2, 0]
 
@@ -227,8 +247,8 @@ if __name__ == '__main__':
 
     # Dictionary mapping between environment ID and Reynolds number
     env_dict = {0: 100, 1: 200}
-    tsteps = [0., 1., 2., 3.]
-    model = Phoo_Model()
+    tsteps = [0., 0.1, 0.2, 0.3]
+    model = Foo_Model()
     
     endMag = 0
     for i in range(len(model)):
@@ -239,21 +259,21 @@ if __name__ == '__main__':
         jet4_table = orle_helper.calc_velocity_table(tsteps[i], tsteps[i+1], startMag, endMag, 10, [-1, -1, 0])
         
         # Submit both environment jobs
-        output_files = []
+        jobs = []
         for j in env_dict.keys():
-            output_file = orle_helper.write_job(
+            job_id = orle_helper.write_job(
                 tsteps[i], 
                 tsteps[i+1],
                 jet1_table,
                 jet4_table,
                 env_id=j
             )
-            output_files = output_files + output_file
+            jobs.append(job_id)
 
         # Now wait for files
-        orle_helper.watch(output_files)
+        orle_helper.watch(jobs)
 
-        files = orle_helper.read_outputs(output_files)
+        files = orle_helper.read_outputs(jobs)
 
         logger.info("Looks like we got some data files...")
         for file in files:

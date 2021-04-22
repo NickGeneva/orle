@@ -10,7 +10,7 @@ id: 0
 
 # Simulation information
 name: template
-hash: 0
+hash: '0'
 
 params:
   solver: pimpleFoam

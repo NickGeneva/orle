@@ -1,10 +1,11 @@
 import os
 import errno
-import logging
 
 from collections.abc import Iterable
 from typing import Dict, List, Tuple, Union 
-logger = logging.getLogger(__name__)
+from .jlogger import getLogger
+
+logger = getLogger('orle')
 
 Config = Union[Dict, List, Tuple]
 

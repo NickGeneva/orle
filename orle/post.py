@@ -1,9 +1,11 @@
 import os
-import logging
 import numpy as np
-logger = logging.getLogger(__name__)
+
 
 from typing import Dict, List, Tuple, Union
+from .jlogger import getLogger
+
+logger = getLogger('orle')
 
 FUNCTION_ERROR = None
 FILE_NAMES = {

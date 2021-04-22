@@ -3,13 +3,14 @@ import time
 import random
 import logging
 
-logger = logging.getLogger(__name__)
-
 from typing import Dict, List, Tuple, Union 
 from filelock import Timeout, FileLock
 from .builders import EnvironmentBuilder
 from .foam import FOAMRunner
 from .collectors import DataCollector
+from .jlogger import getLogger
+
+logger = getLogger('orle')
 
 Config = Union[Dict, List, Tuple]
 
@@ -78,7 +79,7 @@ class OrleProcess(object):
                     self.lock.acquire()
                     self.job_file = file_path
 
-                    logging.info('Acquired job config {:s}'.format(filename))
+                    logger.info('Acquired job config {:s}'.format(filename))
                     return True
         
         return False
@@ -88,6 +89,9 @@ class OrleProcess(object):
     ) -> None:
         """Set up and run environment job
         """
+        # Reset output file logger
+        logger.clean()
+
         output_flag = self.job_setup()
         if not output_flag:
             logger.error('Failed job set up, terminating run')
@@ -106,9 +110,8 @@ class OrleProcess(object):
     def clean(
         self
     ) -> None:
-        """Cleans up environment and config
+        """Cleans up configs
         """
-        logger.error('Cleaning up job.')
         # Rename job file to keep in history
         old_count = 0
         for (dirpath, _, filenames) in os.walk(self.config['job_dir']):
@@ -176,5 +179,7 @@ class OrleProcess(object):
 
         # Collect data
         out = collector.collect()
+
+
 
         return out

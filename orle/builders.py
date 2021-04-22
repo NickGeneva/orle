@@ -1,15 +1,15 @@
 import os
 import re
 import yaml
-import logging
-
-logger = logging.getLogger(__name__)
 
 from typing import Dict, List, Tuple, Union 
 from distutils.dir_util import copy_tree
 from shutil import rmtree
 from .utils import clean_config, mkdirs
 from .mods import OpenFoamMods
+from .jlogger import getLogger
+
+logger = getLogger('orle')
 
 Config = Union[Dict, List, Tuple]
 
@@ -74,7 +74,7 @@ class WorldBuilder(object):
 
         # Create world directory if not initialized
         if overwrite or not self.check_world(world_config):
-            logger.warn('Cleaning and building world.')
+            logger.warning('Cleaning and building world.')
             self.delete_world(world_config)
             built = self.build_world(world_config)
         else:
@@ -151,10 +151,10 @@ class WorldBuilder(object):
             return
 
         try:
-            logger.warn('Deleting world contents.')
+            logger.warning('Deleting world contents.')
             rmtree(world_config['world_dir'])
         except OSError as e:
-            logger.warn('Issue deleting world contents: {:s}'.format(e.strerror))
+            logger.warning('Issue deleting world contents: {:s}'.format(e.strerror))
 
     def build_world(
         self,
@@ -168,7 +168,7 @@ class WorldBuilder(object):
         # Copy basefiles into world folder
         logger.info('Copying base files into world.')
         if os.path.exists(world_config['base_files']):
-            logging.info('Copying base files to local world folder.')
+            logger.info('Copying base files to local world folder.')
             copy_tree(world_config['base_files'], world_files, update=1)
         
         # Create each environment in the world
@@ -193,7 +193,7 @@ class WorldBuilder(object):
         if cleared:
             logger.info('Successfully set up environments.')
         else:
-            logger.warn('Problem detected setting up environments.')
+            logger.warning('Problem detected setting up environments.')
         
         return bool(cleared)
 
@@ -233,8 +233,8 @@ class EnvironmentBuilder(object):
         with open(config_file_path, 'r') as stream:
             try:
                 config = yaml.safe_load(stream)
-                logger.info( 'Parsed environment config file: {:s}; h.{:d}'.format(
-                        config['name'], config['hash']) )
+                logger.info( 'Parsed environment config file: {:s}; h.{:s}'.format(
+                        config['name'], str(config['hash'])) )
             except yaml.YAMLError as exc:
                 logger.error('Error reading the environment job configuration file!')
                 logger.error(exc)

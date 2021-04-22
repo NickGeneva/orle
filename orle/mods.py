@@ -1,8 +1,9 @@
 import os
-import logging
-logger = logging.getLogger(__name__)
 
 from typing import Dict
+from .jlogger import getLogger
+
+logger = getLogger('orle')
 
 FUNCTION_SUCCESS = True
 FUNCTION_ERROR = False
@@ -50,7 +51,7 @@ class OpenFoamMods:
                     break
 
             if not edited:
-                logger.warn('Prop {:s} not present in control dict.'.format(k))
+                logger.warning('Prop {:s} not present in control dict.'.format(k))
                 output = FUNCTION_ERROR
 
         # Write to file

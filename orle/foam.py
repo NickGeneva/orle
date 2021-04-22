@@ -1,10 +1,10 @@
 import os
 import time
-import logging
-
-logger = logging.getLogger(__name__)
 
 from typing import Dict, List, Tuple, Union 
+from .jlogger import getLogger
+
+logger = getLogger('orle')
 
 Config = Union[Dict, List, Tuple]
 
@@ -32,7 +32,7 @@ class FOAMRunner(object):
         """Decomposes fluid simulation domain into sub folders
         """
         if self.config['params']['np'] == 1:
-            logger.warn('Using only 1 process, no need to decompose.')
+            logger.warning('Using only 1 process, no need to decompose.')
             return
         # Run openfoam command
         owd = os.getcwd()
@@ -47,7 +47,7 @@ class FOAMRunner(object):
         """
         # Single core
         if self.config['params']['np'] == 1:
-            logger.warn('Running {:s} on single thread.'.format(self.config['params']['solver']))
+            logger.warning('Running {:s} on single thread.'.format(self.config['params']['solver']))
             owd = os.getcwd()
             os.chdir(self.dir)
             os.system("{:s} {:s}".format(self.config['params']['solver'], 
@@ -55,7 +55,7 @@ class FOAMRunner(object):
             os.chdir(owd)
         # Parallel
         else:
-            logger.warn('Running {:s} in parallel.'.format(self.config['params']['solver']))
+            logger.warning('Running {:s} in parallel.'.format(self.config['params']['solver']))
             owd = os.getcwd()
             os.chdir(self.dir)
             os.system("mpirun -np {:d} {:s} -parallel {:s}".format(
@@ -70,7 +70,7 @@ class FOAMRunner(object):
         TODO: Figure out good way of controlling this (not all parallel sims need reconstruction)
         """
         if self.config['params']['np'] == 1:
-            logger.warn('Using only 1 process, no need to reconstruct.')
+            logger.warning('Using only 1 process, no need to reconstruct.')
             return
         
         owd = os.getcwd()

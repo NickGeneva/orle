@@ -9,8 +9,6 @@ sys.path.append('..')
 import os
 import logging
 
-logger = logging.getLogger(__name__)
-
 from orle import Parser, WorldBuilder, OrleProcess
 
 if __name__ == '__main__':
