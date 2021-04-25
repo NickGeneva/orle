@@ -98,7 +98,7 @@ class ORLE_Helper(object):
         forces = {
             'func': 'get_forces',
             'params': {
-                'boundary': 'cylinder',
+                'function_name': 'forces_cylinder',
                 'time_step': start_time
             }
         }
