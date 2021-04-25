@@ -52,10 +52,21 @@ boundaryField
         value           uniform (0 0 0);
 	}	
 	inlet
-	{
-		type			fixedValue;
-        value           uniform (1 0 0);
-	}	
+    {
+        type            fixedProfile;
+                profile         csvFile;
+                profileCoeffs
+                {
+                    nHeaderLine     0;
+                    refColumn       0;
+                    componentColumns 3(1 2 3);
+                    separator       ",";
+                    mergeSeparators 0;
+                    file        "0/Uprofile.csv";
+                }
+                direction       (0 1 0);
+                origin          0;
+    }	
 	outlet
 	{
 		type			zeroGradient;

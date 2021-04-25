@@ -28,8 +28,7 @@ boundaryField
     }
     cylinder
     {
-        type            nutkWallFunction;
-        value           uniform 0;
+        type			zeroGradient;
     }
     inlet
     {
@@ -38,28 +37,23 @@ boundaryField
     }
     jet1
 	{
-		type            calculated;
-        value           uniform 0;
+        type			zeroGradient;
 	}	
 	jet2
 	{
-		type            calculated;
-        value           uniform 0;
+        type			zeroGradient;
     }
     jet3
 	{
-		type            calculated;
-        value           uniform 0;
+        type			zeroGradient;
 	}	
     jet4
 	{
-		type            calculated;
-        value           uniform 0;
+        type			zeroGradient;
 	}
     outlet
     {
-        type            calculated;
-        value           uniform 0;
+        type			zeroGradient;
     }
     cyclic1
     {

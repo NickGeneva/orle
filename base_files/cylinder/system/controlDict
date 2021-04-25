@@ -23,7 +23,7 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         1.0;
+endTime         5.0;
 
 deltaT          0.001;
 
@@ -101,7 +101,7 @@ functions
         );
     }
 
-    forceCoeffs_cylinder
+    forces_cylinder
     {
         type forces;
         functionObjectLibs ("libforces.so");
@@ -110,7 +110,7 @@ functions
         writeInterval 100;
         patches
         (
-            cylinder
+            cylinder jet1 jet2 jet3 jet4
         );
         log true;
         rho rhoInf;
@@ -119,9 +119,32 @@ functions
         liftDir (0 1 0);
         dragDir (1 0 0);
         pitchAxis (0 0 1);
-        magUInf 1.0;
-        lRef 1.0;
-        Aref 0.2;
+        magUInf 0.9756;
+        lRef 0.1;
+        Aref 0.001;
+    }
+
+    forceCoeffs_cylinder
+    {
+        type forceCoeffs;
+        functionObjectLibs ("libforces.so");
+        enabled true;
+        writeControl timeStep;
+        writeInterval 100;
+        patches
+        (
+            cylinder jet1 jet2 jet3 jet4
+        );
+        log true;
+        rho rhoInf;
+        rhoInf 1.0;
+        CofR (0 0 0);
+        liftDir (0 1 0);
+        dragDir (1 0 0);
+        pitchAxis (0 0 1);
+        magUInf 0.9756;
+        lRef 0.1;
+        Aref 0.001;
     }
 }
 

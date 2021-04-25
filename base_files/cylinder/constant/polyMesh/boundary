@@ -22,72 +22,72 @@ FoamFile
         type    cyclic;
         inGroups    1(cyclic);
         neighbourPatch  cyclic2;
-        nFaces          9496;
-        startFace       16174;
+        nFaces          13513;
+        startFace       22447;
     }
     cyclic2
     {
         type    cyclic;
         inGroups    1(cyclic);
         neighbourPatch  cyclic1;
-        nFaces          9496;
-        startFace       25670;
+        nFaces          13513;
+        startFace       35960;
     }
     cylinder
     {
         type    wall;
-        inGroups    1(wall);
+        physicalType wall;
         nFaces          148;
-        startFace       35166;
+        startFace       49473;
     }
     jet3
     {
         type            patch;
         physicalType    patch;
         nFaces          3;
-        startFace       35314;
+        startFace       49621;
     }
     jet2
     {
         type            patch;
         physicalType    patch;
         nFaces          3;
-        startFace       35317;
+        startFace       49624;
     }
     jet1
     {
         type            patch;
         physicalType    patch;
         nFaces          3;
-        startFace       35320;
+        startFace       49627;
     }
     jet4
     {
         type            patch;
         physicalType    patch;
         nFaces          3;
-        startFace       35323;
+        startFace       49630;
     }
     wall
     {
         type    wall;
-        inGroups    1(wall);
-        nFaces          148;
-        startFace       35326;
+        physicalType wall;
+        nFaces          178;
+        startFace       49633;
     }
     inlet
     {
         type            patch;
         physicalType    patch;
-        nFaces          24;
-        startFace       35474;
+        nFaces          29;
+        startFace       49811;
     }
     outlet
     {
         type            patch;
         physicalType    patch;
-        nFaces          24;
-        startFace       35498;
+        nFaces          29;
+        startFace       49840;
     }
 )
 

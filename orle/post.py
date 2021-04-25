@@ -17,14 +17,14 @@ class OpenFoamPost:
     @classmethod
     def get_forces(
         cls,
-        boundary: str,
+        function_name: str,
         time_step: int,
         _env_dir: str
     ) -> Union[Dict, None]:
         """Extracts forcing values from OpenFOAM files
 
         Args:
-            boundary (str): Name of boundary on which force values were calculated
+            function_name (str): Name of the force function in the controlDict
             time_step (int): initial time-step of simulation
             env_dir (str): Path to OpenFOAM simulation folder, (do not set this in config file)
 
@@ -66,11 +66,14 @@ class OpenFoamPost:
             return list0, _
 
 
-        force_file = os.path.join(_env_dir, 'postProcessing', 'forceCoeffs_{:s}'.format(boundary), 
-                        '{:g}'.format(time_step), 'forces.dat')
+        force_folder = os.path.join(_env_dir, 'postProcessing', function_name, '{:g}'.format(time_step))
+        filenames = [os.path.join(force_folder, f) for f in os.listdir(force_folder) \
+                         if f.startswith('forces')]
+        # Get the latest editted force data file
+        force_file = max(filenames, key=os.path.getctime)
 
         if not os.path.exists(force_file):
-            sub_folder = os.path.join('postProcessing', 'forceCoeffs_{:s}'.format(boundary), 
+            sub_folder = os.path.join('postProcessing', function_name, 
                             '{:g}'.format(time_step))
             logger.error('Could not find forces.dat file to in {:s}.'.format(sub_folder))
             return FUNCTION_ERROR

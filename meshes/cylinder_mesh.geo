@@ -13,8 +13,8 @@ sp = 4;
 r = 0.05;
 r2 = 0.1;
 sw = 10/180;
-sres = 25; //Sensor area
-outres  = 25; //Outer area
+sres = 30; //Sensor area
+outres  = 30; //Outer area
 
 // Jets to be placed on 75, 105, 255, 285 deg
 // Jets will have a width of 10*rad
@@ -249,7 +249,7 @@ Line(110) = {58, 59};
 //+
 Line(111) = {59, 52};
 //+
-Transfinite Curve {109, 110, 111} = sres/2 Using Progression 1.0;//+
+Transfinite Curve {109, 110, 111} = outres Using Progression 1.0;//+
 //+
 Curve Loop(67) = {22, 23, 24, 13, 14, 15, 16, 17, 18, 19, 20, 21};
 //+
