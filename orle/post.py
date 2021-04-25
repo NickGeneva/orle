@@ -5,7 +5,7 @@ import numpy as np
 from typing import Dict, List, Tuple, Union
 from .jlogger import getLogger
 
-logger = getLogger('orle')
+logger = getLogger(__name__)
 
 FUNCTION_ERROR = None
 FILE_NAMES = {

@@ -9,7 +9,7 @@ from .utils import clean_config, mkdirs
 from .mods import OpenFoamMods
 from .jlogger import getLogger
 
-logger = getLogger('orle')
+logger = getLogger(__name__)
 
 Config = Union[Dict, List, Tuple]
 

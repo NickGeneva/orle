@@ -4,7 +4,7 @@ import time
 from typing import Dict, List, Tuple, Union 
 from .jlogger import getLogger
 
-logger = getLogger('orle')
+logger = getLogger(__name__)
 
 Config = Union[Dict, List, Tuple]
 

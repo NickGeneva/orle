@@ -7,7 +7,7 @@ from typing import Dict, List, Tuple, Union
 from .post import OpenFoamPost, FILE_NAMES
 from .jlogger import getLogger
 
-logger = getLogger('orle')
+logger = getLogger(__name__)
 
 Config = Union[Dict, List, Tuple]
 

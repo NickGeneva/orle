@@ -3,7 +3,7 @@ import os
 from typing import Dict
 from .jlogger import getLogger
 
-logger = getLogger('orle')
+logger = getLogger(__name__)
 
 FUNCTION_SUCCESS = True
 FUNCTION_ERROR = False

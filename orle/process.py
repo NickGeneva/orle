@@ -10,7 +10,7 @@ from .foam import FOAMRunner
 from .collectors import DataCollector
 from .jlogger import getLogger
 
-logger = getLogger('orle')
+logger = getLogger(__name__)
 
 Config = Union[Dict, List, Tuple]
 
