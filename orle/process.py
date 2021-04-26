@@ -128,6 +128,9 @@ class OrleProcess(object):
         self.lock.release(force = True)
         os.remove(self.lock._lock_file)
         self.lock = None
+        
+        # Set config object to None
+        self.job_config = None
 
     def job_setup(
         self
@@ -139,8 +142,10 @@ class OrleProcess(object):
         """
         logger.info('Setting up environment folder.')
         env_builder = EnvironmentBuilder(self.job_file, self.config)
+        # Store environment directory and config for other tasks
         self.env_dir = env_builder.env_dir
         self.job_config = env_builder.config
+
         # Make sure necessary params are in the config
         if not env_builder.validate_config():
             return False
@@ -179,7 +184,5 @@ class OrleProcess(object):
 
         # Collect data
         out = collector.collect()
-
-
 
         return out

@@ -57,7 +57,7 @@ boundaryField
                 profile         csvFile;
                 profileCoeffs
                 {
-                    nHeaderLine     0;
+                    nHeaderLine     16;
                     refColumn       0;
                     componentColumns 3(1 2 3);
                     separator       ",";

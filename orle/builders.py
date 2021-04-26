@@ -355,7 +355,7 @@ class EnvironmentBuilder(object):
         # Get start time
         for line in lines:
             if line.lstrip().startswith("startTime"):
-                start_time = float(re.findall(r'\d+', line)[0])
+                start_time = float(re.findall(r'\d*\.?\d+', line)[0])
                 break
         
         # Make sure start time folders exist

@@ -107,7 +107,7 @@ class ORLE_Helper(object):
             'id': env_id,
             'name': 'cylinder',
             'hash': job_hash,
-            'params': {'solver':'pimpleFoam', 'np':1, 'args':''},
+            'params': {'solver':'pimpleFoam', 'np':16, 'args':''},
             'mods': [control_dict, set_boundary_1, set_boundary_4],
             'post': [forces]
         }

@@ -1,7 +1,9 @@
 import os
+import re
 import time
 
 from typing import Dict, List, Tuple, Union 
+from .mods import OpenFoamMods
 from .jlogger import getLogger
 
 logger = getLogger(__name__)
@@ -27,24 +29,38 @@ class FOAMRunner(object):
         self.dir = foam_dir
 
     def decompose(
-        self
+        self,
+        force: bool = False
     ) -> None:
         """Decomposes fluid simulation domain into sub folders
+
+        Args:
+            force (bool, Optional) Force domain decompose. Defaults to False.
         """
         if self.config['params']['np'] == 1:
             logger.warning('Using only 1 process, no need to decompose.')
             return
+
+        # First get the start time from control dict
+        start_time = self.get_start_timestep()
+        print(start_time)
+        
         # Run openfoam command
         owd = os.getcwd()
         os.chdir(self.dir)
-        os.system("decomposePar -force")
+        os.system("decomposePar -force -time '0, {:g}'".format(start_time))
         os.chdir(owd)
+
+        time.sleep(0.1)
 
     def run(
         self,
     ) -> None:
         """Runs the OpenFOAM simulation
         """
+        # First edit the control application field
+        OpenFoamMods.set_control_dict({'application': self.config['params']['solver']}, self.dir)
+
         # Single core
         if self.config['params']['np'] == 1:
             logger.warning('Running {:s} on single thread.'.format(self.config['params']['solver']))
@@ -53,6 +69,7 @@ class FOAMRunner(object):
             os.system("{:s} {:s}".format(self.config['params']['solver'], 
                     self.config['params']['args']))
             os.chdir(owd)
+        
         # Parallel
         else:
             logger.warning('Running {:s} in parallel.'.format(self.config['params']['solver']))
@@ -67,7 +84,6 @@ class FOAMRunner(object):
         self
     ) -> None:
         """Reconstructs OpenFOAM field from parallel folders
-        TODO: Figure out good way of controlling this (not all parallel sims need reconstruction)
         """
         if self.config['params']['np'] == 1:
             logger.warning('Using only 1 process, no need to reconstruct.')
@@ -75,5 +91,36 @@ class FOAMRunner(object):
         
         owd = os.getcwd()
         os.chdir(self.dir)
-        os.system("reconstructPar")
+        os.system("reconstructPar -latestTime")
         os.chdir(owd)
+
+
+    def get_start_timestep(
+        self
+    ) -> float:
+        """Gets the starting timestep from controlDict
+
+        Returns:
+            float: Starting time-step
+        """
+        control_file = os.path.join(self.dir, 'system', 'controlDict')
+
+        print(control_file)
+
+        if not os.path.exists(control_file):
+            logger.error('Could not find controlDict file to edit.')
+            return 0
+
+        # Read in lines
+        with open(control_file, 'r') as file:
+            lines = file.readlines() 
+
+        for _, line in enumerate(lines):
+            print(line, line.lstrip().startswith("startTime"), re.findall(r'\d*\.?\d+', line))
+            if line.lstrip().startswith("startTime"):
+                start_time = float(re.findall(r'\d*\.?\d+', line)[0])
+                return start_time
+        
+        return 0
+
+        

@@ -174,7 +174,6 @@ class JobLogger(RootJobLogger):
         self.logger.error(message, *args, **kwargs)
 
 
-
 def getLogger(
     name:str, 
     root: str = 'orle',
