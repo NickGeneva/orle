@@ -1,7 +1,7 @@
 ## OpenFOAM Reinforcement Learning Environment
 
 ### TODO List:
-- Added proc check in decompParDict
-- Add post process job for extracting probes
-- Add post process clean up method
-- Add post process to clean up old field folders
+- Add post process method for extracting probes
+- Add post process method for extracting Cl and Cd values
+- Add post process clean up methods
+- Parallel without decomposing/reconstruction? 
