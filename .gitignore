@@ -133,7 +133,6 @@ dmypy.json
 *.lock
 *.hdf5
 *.h5
-*.csv
 *.npy
 
 # Output files
