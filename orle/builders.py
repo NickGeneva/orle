@@ -337,7 +337,6 @@ class EnvironmentBuilder(object):
         self
     ) -> bool:
         """Runs validation checks of the environment folder
-        TODO: Add parallel support
 
         Returns:
             bool: Validation successful

@@ -1,5 +1,5 @@
 # =====================================
-# OpenFOAM Reinforcement Learning Environment (ORLE) Job Config
+# OpenFOAM Reinforcement Learning Environment (ORLE) Example Job Config
 # 
 # This configuration files should be used to define different worlds 
 # and environments that exist in the learning universe.

@@ -24,6 +24,7 @@ class OpenFoamMods:
         Args:
             props (Dict): Props to change in the control dict. These props
             must exist in the controlDict to be changed.
+            env_dir (str): Path to OpenFOAM simulation folder
 
         Returns:
             bool: Successful modification
@@ -52,6 +53,55 @@ class OpenFoamMods:
 
             if not edited:
                 logger.warning('Prop {:s} not present in control dict.'.format(k))
+                output = FUNCTION_ERROR
+
+        # Write to file
+        with open(control_file, 'w') as file:
+            file.writelines(lines)
+
+        return output
+
+    @classmethod
+    def set_decompose_dict(
+        cls,
+        props,
+        env_dir:str
+    ) -> bool:
+        """Sets parameters in the decompose par dict for parallel simulations.
+        This method only edits parameters, it will not add new parameters.
+
+        Args:
+            props (Dict): Props to change in the control dict. These props
+            must exist in the decomposeParDict to be changed.
+            env_dir (str): Path to OpenFOAM simulation folder
+
+        Returns:
+            bool: Successful modification
+        """
+        logger.info('Setting decomposeParDict parameters.')
+
+        control_file = os.path.join(env_dir, 'system', 'decomposeParDict')
+
+        if not os.path.exists(control_file):
+            logger.error('Could not find decomposeParDict file to edit.')
+            return FUNCTION_ERROR
+
+        # Read in lines
+        with open(control_file, 'r') as file:
+            lines = file.readlines() 
+
+        # Edit props in control dict
+        output = FUNCTION_SUCCESS
+        for k, v in props.items():
+            edited = False
+            for i, line in enumerate(lines):
+                if line.lstrip().startswith(k):
+                    lines[i] = "{:s}\t\t\t{:s};\n".format(k, str(v))
+                    edited = True
+                    break
+
+            if not edited:
+                logger.warning('Prop {:s} not present in decompose dict.'.format(k))
                 output = FUNCTION_ERROR
 
         # Write to file
@@ -108,7 +158,6 @@ class OpenFoamMods:
         env_dir: str
     ) -> bool:
         """Sets mesh boundary of field to specified property
-        TODO: Support parallel process folders
 
         Args:
             field (str): Name of the field to edit

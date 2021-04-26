@@ -43,7 +43,11 @@ class FOAMRunner(object):
 
         # First get the start time from control dict
         start_time = self.get_start_timestep()
-        print(start_time)
+
+        # Set decomposeParDict to number of procs for consistency
+        cleared = OpenFoamMods.set_decompose_dict({"numberOfSubdomains": self.config['params']['np']}, self.dir)
+        if cleared == 0:
+            logger.warning('Failed to successfully modify the decomposeParDict.')
         
         # Run openfoam command
         owd = os.getcwd()
@@ -58,7 +62,7 @@ class FOAMRunner(object):
     ) -> None:
         """Runs the OpenFOAM simulation
         """
-        # First edit the control application field
+        # Set the control application field for consistency
         OpenFoamMods.set_control_dict({'application': self.config['params']['solver']}, self.dir)
 
         # Single core
@@ -116,11 +120,8 @@ class FOAMRunner(object):
             lines = file.readlines() 
 
         for _, line in enumerate(lines):
-            print(line, line.lstrip().startswith("startTime"), re.findall(r'\d*\.?\d+', line))
             if line.lstrip().startswith("startTime"):
                 start_time = float(re.findall(r'\d*\.?\d+', line)[0])
                 return start_time
         
-        return 0
-
-        
+        return 0   
