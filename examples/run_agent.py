@@ -1,27 +1,25 @@
 """
 This is an example agent script to mimic a RL model
 
-For now ORLE does not provide agent functions, will
-try to integrate certain methods in the future, maybe
-a helper class
+ORLE does not provide agent functions nor should ORLE
+even be imported in the agent.
 """
 import sys
 sys.path.append('..')
 import os
-import random
 import time
-import yaml
 import logging
+import random
 import numpy as np
 
 logger = logging.getLogger(__name__)
 
 from typing import List
 from filelock import FileLock
+from agent_job_handler import CylinderJobHandler
 
-class ORLE_Helper(object):
-
-    """Helper class for ORLE
+class JobHelper(object):
+    """Helper class for ORLE jobs
 
     This implementation only supports a single world folder
     """
@@ -32,124 +30,6 @@ class ORLE_Helper(object):
     ):
         self.job_dir = job_dir
         self.output_dir = output_dir
-        
-    def write_job(
-        self,
-        start_time: int,
-        end_time: int,
-        jet1_table: str,
-        jet4_table: str,
-        env_id: int = 0,
-        job_hash:int = None
-    ):
-        """Writes a job config for calculating forcing on cylinder
-
-        Args:
-            start_time (int): Simulation start time
-            end_time (int): Simulation end time
-            jet1_table (str): jet 1 boundary velocity table
-            jet4_table (str): jet 4 boundary velocity table
-            env_id (int, optional): Environment id. Defaults to 0.
-            job_hash (int, optional): Unique identifier for this job. Defaults to random int.
-
-
-        Returns:
-            (str): job hash id
-        """
-        if job_hash is None:
-            job_hash = str(random.randint(0, 1000000))
-
-        # Make config object
-        control_dict = {
-            'func':'set_control_dict', 
-            'params':{ 
-                'props':{ 
-                    'startTime': start_time, 
-                    'endTime': end_time 
-                } 
-            } 
-        }
-        set_boundary_1 = {
-            'func': 'set_boundary', 
-            'params':{ 
-                'field': 'U', 
-                'boundary': 'jet1', 
-                'time_step': start_time,
-                'props': {
-                    'type': 'uniformFixedValue',
-                    'uniformValue': jet1_table
-                }
-            }
-        } 
-
-        set_boundary_4 = {
-            'func': 'set_boundary',
-            'params':{ 
-                'field': 'U', 
-                'boundary': 'jet4', 
-                'time_step': start_time,
-                'props': {
-                    'type': 'uniformFixedValue',
-                    'uniformValue': jet4_table
-                }
-            }
-        } 
-
-        forces = {
-            'func': 'get_forces',
-            'params': {
-                'function_name': 'forces_cylinder',
-                'time_step': start_time
-            }
-        }
-
-        config = {
-            'id': env_id,
-            'name': 'cylinder',
-            'hash': job_hash,
-            'params': {'solver':'pimpleFoam', 'np':8, 'args':'', 'decompose':False, 'reconstruct':False},
-            'mods': [control_dict, set_boundary_1, set_boundary_4],
-            'post': [forces]
-        }
-
-        config_file = os.path.join(self.job_dir, 'cylinder_env{:d}.yml'.format(env_id))
-        with FileLock(config_file+".lock"):
-            with open(config_file, 'w') as file:
-                yaml.dump(config, file, default_flow_style=False)
-
-        return job_hash
-
-    def calc_velocity_table(
-        self,
-        start_time: float,
-        end_time: float,
-        start_vmag: float,
-        end_vmag: float,
-        steps: int ,
-        normal = [1, 0, 0]
-    ) -> str:
-        """Creates a simple linear velocity ramp table for OpenFOAM boundary
-
-        Args:
-            start_time (float): start time of velocity ramp
-            end_time (float): end time of velocity ramp
-            start_vmag (float): starting magnitude
-            end_vmag (float): ending magnitude]
-            steps (int): number of steps in time range
-            normal (list, optional): normal direction of velocity component. Defaults to [1, 0, 0].
-
-        Returns:
-            (str): table for OpenFOAM field file
-        """
-        table = ""
-        times = np.linspace(start_time, end_time, steps)
-        mags = np.linspace(start_vmag, end_vmag, steps)
-        for i in range(steps):
-            table += '({:.04f} ({:.04f} {:.04f} {:.04f}))'.format(
-                times[i], mags[i]*normal[0], mags[i]*normal[1], mags[i]*normal[2]
-            )
-
-        return "table ("+table+")"
 
     def watch(
         self,
@@ -159,10 +39,14 @@ class ORLE_Helper(object):
         """Watches output folder
 
         Args:
-            jobs (List): List of job ids to look for
+            jobs (List): List of job objects
             dt (float, optional): Sleep interval
         """
-        logger.info('Watching for output files.')
+        logger.info('Watching for output files of {:d} jobs.'.format(len(jobs)))
+
+        job_hashes = []
+        for job in jobs:
+            job_hashes.append(job.get_hash())
 
         while True:
             # Sleep process before checking for config file again
@@ -176,7 +60,7 @@ class ORLE_Helper(object):
             filenames = [f for f in os.listdir(self.output_dir) \
                 if os.path.isfile(os.path.join(self.output_dir, f))]
 
-            output_files = ['output{:s}.yml'.format(job_id) for job_id in jobs]
+            output_files = ['output{:s}.yml'.format(job_id) for job_id in job_hashes]
             for file in output_files:
                 # If output file is not in output directory, we need to wait more.
                 if not file in filenames:
@@ -184,42 +68,6 @@ class ORLE_Helper(object):
 
             if cleared:
                 break
-
-    def read_outputs(
-        self,
-        jobs: List
-    ) -> List:
-        """Reads in numpy output files from ORLE
-
-        Args:
-            jobs (List): List of job ids
-
-        Returns:
-            List: List of numpy arrays
-        """
-        arrays = []
-
-        for job in jobs:
-            output_path = os.path.join(self.output_dir, "output{:s}.yml".format(job))
-            with open(output_path, 'r') as stream:
-                try:
-                    output = yaml.safe_load(stream)
-                    logger.info( 'Loaded output file for job {:s}'.format(job) )
-                    logger.info( 'Job exited with status {:d} and produced {:d} output files'.format(int(output['status']), len(output['files'])) )
-                except yaml.YAMLError as exc:
-                    logger.error('Error reading the output file!')
-                    logger.error(exc)
-                    output = None
-
-            # If we could read the output log and the environment ended with out errors
-            # read in data files.
-            if output and output['status'] == 1:
-                for file in output['files']:
-                    if 'forces' in file:
-                        file_path = os.path.join(self.output_dir, file)
-                        arrays.append(np.load(file_path, allow_pickle = True))
-
-        return arrays
 
 
 class Foo_Model(object):
@@ -243,40 +91,57 @@ if __name__ == '__main__':
 
     job_dir = "./world0/configs"
     output_dir = "./world0/outputs"
-    orle_helper = ORLE_Helper(job_dir, output_dir)
+    job_helper = JobHelper(job_dir, output_dir)
 
-    # Dictionary mapping between environment ID and Reynolds number
-    env_dict = {0: 100, 1: 200}
-    tsteps = [0., 0.1, 0.2, 0.3]
+    # Create training data-set, ensure consistency with universe config
+    viscs = [0.001, 0.002]
+    env_ids = [0, 1]
+    start_times = [0, 0]
+    end_times = [i+0.1 for i in start_times]
+    nproc = 8
+    job_handler = CylinderJobHandler( job_dir, output_dir )
+    training_loader = job_handler.create_training_dataloader( viscs, env_ids, start_times, end_times, \
+                            batch_size=1, nproc=nproc )
+
+    # Fake RL agent
     model = Foo_Model()
-    
-    endMag = 0
+
     for i in range(len(model)):
-        startMag = endMag
-        endMag = model(i) # Prediction from NN
+ 
+        # Process batches
+        for mbidx, job_batch in enumerate(training_loader):
+            print(job_batch)
+            inputs = job_batch['inputs']
+            jobs = job_batch['jobs']
 
-        jet1_table = orle_helper.calc_velocity_table(tsteps[i], tsteps[i+1], startMag, endMag, 10, [-1, 1, 0])
-        jet4_table = orle_helper.calc_velocity_table(tsteps[i], tsteps[i+1], startMag, endMag, 10, [-1, -1, 0])
-        
-        # Submit both environment jobs
-        jobs = []
-        for j in env_dict.keys():
-            job_id = orle_helper.write_job(
-                tsteps[i], 
-                tsteps[i+1],
-                jet1_table,
-                jet4_table,
-                env_id=j
-            )
-            jobs.append(job_id)
+            # Prediction from NN
+            endMag = model(i)
 
-        # Now wait for files
-        orle_helper.watch(jobs)
+            # Modify job params for next run
+            for job in jobs:
+                job.set_jet('jet1', endMag, steps=5)
+                job.set_jet('jet4', endMag, steps=5)
 
-        files = orle_helper.read_outputs(jobs)
+            logger.info('Writing batch job configs.')
+            for job in jobs:
+                job.write()
 
-        logger.info("Looks like we got some data files...")
-        for file in files:
-            print(file)
+            job_helper.watch(jobs)
+
+            forces = []
+            for job in jobs:
+                output = job.read()
+                if not output is None:
+                    forces.append(output[1])
+
+            logger.info('Lets take a look at the output')
+            print(forces)
+
+            # Here you should calculate your loss, backprop and optimize
+            # [code here]
+
+            # Move start/stop time forward by stride for next run
+            for job in jobs:
+                job.stride_time_range()
 
         time.sleep(3.0)

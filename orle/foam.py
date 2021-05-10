@@ -102,7 +102,7 @@ class FOAMRunner(object):
         if self.config['params']['np'] == 1:
             logger.warning('Using only 1 process, no need to reconstruct.')
             return
-        logger.error(self.config['params']['reconstruct'])
+
         if self.config['params']['reconstruct'] == False:
             return
         

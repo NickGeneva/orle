@@ -358,8 +358,15 @@ class EnvironmentBuilder(object):
                 break
         
         # Make sure start time folders exist
+        # Parallel
+        parallel = True
+        for i in range(self.config['params']['np']):
+            proc_folder = os.path.join(self.env_dir, 'processor{:d}'.format(i), '{:g}'.format(start_time))
+            if not os.path.exists(proc_folder):
+                parallel = False
+        # Serial
         field_dir = os.path.join(self.env_dir, "{:g}".format(start_time))
-        if not os.path.exists(field_dir):
+        if not os.path.exists(field_dir) and not parallel:
             logger.error('Starting time-step fields do not exist.')
 
         return True
