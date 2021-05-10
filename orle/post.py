@@ -12,6 +12,7 @@ FILE_NAMES = {
     'get_forces': 'forces'
 }
 
+
 class OpenFoamPost:
 
     @classmethod

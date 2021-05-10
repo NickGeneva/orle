@@ -12,8 +12,7 @@ Config = Union[Dict, List, Tuple]
 
 class FOAMRunner(object):
     """Interfaces with OpenFOAM library
-    TODO: Change config input to file path and then load it inside of class? Maybe
-    TODO: Validate parallel
+
     Args:
         config (Config): environment job config
         foam_dir (str): directory path to OpenFOAM simulation
@@ -40,22 +39,33 @@ class FOAMRunner(object):
         if self.config['params']['np'] == 1:
             logger.warning('Using only 1 process, no need to decompose.')
             return
-
+        
         # First get the start time from control dict
         start_time = self.get_start_timestep()
 
         # Set decomposeParDict to number of procs for consistency
-        cleared = OpenFoamMods.set_decompose_dict({"numberOfSubdomains": self.config['params']['np']}, self.dir)
+        cleared = OpenFoamMods.set_decompose_dict({"numberOfSubdomains": self.config['params']['np']}, env_dir=self.dir)
         if cleared == 0:
             logger.warning('Failed to successfully modify the decomposeParDict.')
-        
-        # Run openfoam command
-        owd = os.getcwd()
-        os.chdir(self.dir)
-        os.system("decomposePar -force -time '0, {:g}'".format(start_time))
-        os.chdir(owd)
 
-        time.sleep(0.1)
+        # Check to see if process folders are set up with the start times
+        folders = True
+        for i in range(self.config['params']['np']):
+            proc_folder = os.path.join(self.dir, 'processor{:d}'.format(i), '{:g}'.format(start_time))
+            if not os.path.exists(proc_folder):
+                logger.warning( 'Necessary process folder {:s} not found, forcing decomposePar.'.format(proc_folder))
+                folders = False
+                break
+        
+        if not folders or self.config['params']['decompose'] or force:
+            logger.warning('Decomposing domain.')
+            # Run openfoam command
+            owd = os.getcwd()
+            os.chdir(self.dir)
+            os.system("decomposePar -force -time '0, {:g}'".format(start_time))
+            os.chdir(owd)
+
+            time.sleep(0.1)
 
     def run(
         self,
@@ -92,10 +102,15 @@ class FOAMRunner(object):
         if self.config['params']['np'] == 1:
             logger.warning('Using only 1 process, no need to reconstruct.')
             return
+        logger.error(self.config['params']['reconstruct'])
+        if self.config['params']['reconstruct'] == False:
+            return
         
+        time = self.get_end_timestep()
+
         owd = os.getcwd()
         os.chdir(self.dir)
-        os.system("reconstructPar -latestTime")
+        os.system( "reconstructPar -time {:g}".format( time ) )
         os.chdir(owd)
 
 
@@ -108,8 +123,6 @@ class FOAMRunner(object):
             float: Starting time-step
         """
         control_file = os.path.join(self.dir, 'system', 'controlDict')
-
-        print(control_file)
 
         if not os.path.exists(control_file):
             logger.error('Could not find controlDict file to edit.')
@@ -125,3 +138,28 @@ class FOAMRunner(object):
                 return start_time
         
         return 0   
+
+    def get_end_timestep(
+        self
+    ) -> float:
+        """Gets the ending timestep from controlDict
+
+        Returns:
+            float: Ending time-step
+        """
+        control_file = os.path.join(self.dir, 'system', 'controlDict')
+
+        if not os.path.exists(control_file):
+            logger.error('Could not find controlDict file to edit.')
+            return 0
+
+        # Read in lines
+        with open(control_file, 'r') as file:
+            lines = file.readlines() 
+
+        for _, line in enumerate(lines):
+            if line.lstrip().startswith("endTime"):
+                start_time = float(re.findall(r'\d*\.?\d+', line)[0])
+                return start_time
+        
+        return 0  

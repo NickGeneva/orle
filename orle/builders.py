@@ -282,7 +282,7 @@ class EnvironmentBuilder(object):
                 return False
 
         # Check necessary simulation params
-        req_keys = ['solver', 'np', 'args']
+        req_keys = ['solver', 'np', 'args', 'decompose', 'reconstruct']
         for key in req_keys:
             if not key in self.config['params'].keys():
                 logger.error('Required simulation parameter params/{:s} not in config.'.format(key))

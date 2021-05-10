@@ -16,6 +16,8 @@ params:
   solver: pimpleFoam
   np: 1
   args: ''
+  reconstruct: False
+  decompose: False
 
 mods:
   -

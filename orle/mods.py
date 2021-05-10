@@ -1,5 +1,5 @@
 import os
-
+import functools
 from typing import Dict
 from .jlogger import getLogger
 
@@ -8,10 +8,58 @@ logger = getLogger(__name__)
 FUNCTION_SUCCESS = True
 FUNCTION_ERROR = False
 
+
+def parallel_mod(func):
+    """Decorator for mods to edit files in parallel folders if present
+    Removes requirement of decomposing/reconstructing domain between runs
+
+    TODO Args:
+        decompose(bool, optional): Forcing decomposition of domain, so do not
+            attempt to edit the process folders. Defaults to False.
+    """
+    @functools.wraps(func)
+    def parallel_mod_wrapper(
+        *args, 
+        **kwargs,
+    ) -> bool:
+        # Modify env_dir to sub process folders
+        env_dir = kwargs['env_dir']
+
+        if not os.path.exists(env_dir):
+            logger.error('Could not find environment directory.')
+            return FUNCTION_ERROR
+
+        # Get process folders 
+        proc_folders = [os.path.join(env_dir, f) for f in os.listdir(env_dir) \
+                         if f.startswith('processor') and os.path.isdir(os.path.join(env_dir, f))]
+
+        # Decomposed environment
+        output = FUNCTION_SUCCESS
+        if len(proc_folders) > 0:
+            # If process folders present loop through them
+            for proc_f in proc_folders:
+                logger.info( 'Modifying process folder {:s}.'.format(os.path.basename(os.path.normpath(proc_f))) )
+                mkwargs = kwargs.copy()
+                mkwargs['env_dir'] = proc_f
+
+                if not func(*args, **mkwargs):
+                    logger.warning( 'Failed modding process folder {:s}.'.format( proc_f ) )
+                    output = FUNCTION_ERROR
+
+        # Non-decomposed environment or failure, always try this in case of decompose force
+        output_serial = func(*args, **kwargs)
+
+        if not output:
+            logger.warning( 'Failed editting process folders.' ) 
+            output = output_serial
+
+        return output
+
+    return parallel_mod_wrapper
+
 class OpenFoamMods:
     """Stores different modification functions for openFOAM simulations
     """
-    
     @classmethod
     def set_control_dict(
         cls,
@@ -65,7 +113,7 @@ class OpenFoamMods:
     def set_decompose_dict(
         cls,
         props,
-        env_dir:str
+        *, env_dir:str
     ) -> bool:
         """Sets parameters in the decompose par dict for parallel simulations.
         This method only edits parameters, it will not add new parameters.
@@ -73,7 +121,7 @@ class OpenFoamMods:
         Args:
             props (Dict): Props to change in the control dict. These props
             must exist in the decomposeParDict to be changed.
-            env_dir (str): Path to OpenFOAM simulation folder
+            env_dir (str): Path to OpenFOAM simulation folder. Forced keyword.
 
         Returns:
             bool: Successful modification
@@ -114,13 +162,13 @@ class OpenFoamMods:
     def set_viscosity(
         cls,
         visc: int,
-        env_dir: str
+        *, env_dir: str
     ) -> bool:
         """Sets the viscosity of OpenFOAM environment 
 
         Args:
             visc (int): Viscosity of the fluid 
-            env_dir (str): Path to OpenFOAM simulation folder
+            env_dir (str): Path to OpenFOAM simulation folder. Forced keyword.
 
         Returns:
             bool: Successful modification
@@ -149,13 +197,14 @@ class OpenFoamMods:
         return FUNCTION_SUCCESS
 
     @classmethod
+    @parallel_mod
     def set_boundary(
         cls,
         field: str,
         boundary: str,
         time_step: int,
         props: Dict,
-        env_dir: str
+        *, env_dir: str
     ) -> bool:
         """Sets mesh boundary of field to specified property
 
@@ -164,7 +213,7 @@ class OpenFoamMods:
             boundary (str): Name of mesh region to edit
             time_step (int): Time-step to edit
             props (Dict): Dictionary of properties to set boundary to
-            env_dir (str): Path to OpenFOAM simulation folder
+            env_dir (str): Path to OpenFOAM simulation folder. Forced keyword.
 
         Returns:
             bool: Successful modification
@@ -174,7 +223,7 @@ class OpenFoamMods:
         field_file = os.path.join(env_dir, '{:g}'.format(time_step), field)
 
         if not os.path.exists(field_file):
-            logger.error('Could not find field file {:s} at time-step {:g} to edit.'.format(field, time_step))
+            logger.warning('Could not find field file {:s} at time-step {:g} to edit.'.format(field, time_step))
             return FUNCTION_ERROR
 
         # Read in text
