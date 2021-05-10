@@ -89,8 +89,8 @@ class CylinderJob(ORLEJobBase):
         # Jet paramters
         default_table = "table (({:g} (0.0 0.0 0.0)))".format(start_time)
         self.jet_tables = {"jet1": default_table, "jet2":default_table, "jet3": default_table, "jet4":default_table}
-        self.jet_normals = {"jet1": [-math.sqrt(2), math.sqrt(2), 0], "jet2":[math.sqrt(2), math.sqrt(2), 0], \
-                        "jet3": [math.sqrt(2), -math.sqrt(2), 0], "jet4":[-math.sqrt(2), -math.sqrt(2), 0]}
+        self.jet_normals = {"jet1": [-1, 1, 0], "jet2":[1, 1, 0], \
+                        "jet3": [1, -1, 0], "jet4":[-1, -1, 0]}
         self.vmag_targets = {"jet1": 0.0, "jet2": 0.0, "jet3": 0.0, "jet4": 0.0}
 
         # Output of job
@@ -137,8 +137,9 @@ class CylinderJob(ORLEJobBase):
         times = np.linspace(self.start_time, self.end_time, steps)
         mags = np.linspace(vmag_start, vmag_end, steps)
         for i in range(steps):
+            mag0 = np.sqrt(mags[i]**2 / (normal[0]**2 + normal[1]**2 + normal[2]**2))
             table += '({:.04f} ({:.04f} {:.04f} {:.04f}))'.format(
-                times[i], mags[i]*normal[0], mags[i]*normal[1], mags[i]*normal[2]
+                times[i], mag0*normal[0], mag0*normal[1], mag0*normal[2]
             )
 
         self.jet_tables[jet_name] = "table ("+table+")"

@@ -110,7 +110,7 @@ if __name__ == '__main__':
  
         # Process batches
         for mbidx, job_batch in enumerate(training_loader):
-            print(job_batch)
+            
             inputs = job_batch['inputs']
             jobs = job_batch['jobs']
 
