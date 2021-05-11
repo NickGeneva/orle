@@ -380,7 +380,7 @@ class CylinderJobHandler(object):
             )
 
             inputs.append(
-                InputMetrics(window=2)
+                InputMetrics(window=5)
             )
 
         dataset = JobDataset(examples, inputs)
