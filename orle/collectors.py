@@ -45,10 +45,13 @@ class DataCollector(object):
         for post in self.config['post']:
             # Check mod is supported
             if hasattr(OpenFoamPost, post['func']):
-                out = getattr(OpenFoamPost, post['func'])(**post['params'], _env_dir=self.dir)
+                out = getattr(OpenFoamPost, post['func'])(**post['params'], env_dir=self.dir)
                 cleared = cleared * (not out is None)
 
-                file_name =  FILE_NAMES[post['func']] + str(self.config['hash']) + '.npy'
+                if 'outputname' in post.keys():
+                    file_name =  post['outputname'] + str(self.config['hash']) + '.npy'
+                else:
+                    file_name =  FILE_NAMES[post['func']] + str(self.config['hash']) + '.npy'
                 file_path = os.path.join(self.output_dir, file_name)
                 if os.path.exists(file_path):
                     logger.warning('Output file {:s} exists, overwriting.'.format(file_name))

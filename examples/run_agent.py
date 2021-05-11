@@ -72,7 +72,7 @@ class JobHelper(object):
 
 class Foo_Model(object):
 
-    vel_mags = [1, 2, 0]
+    vel_mags = [1, 2, 1, 2]
 
     def __call__(self, i:int):
         return self.vel_mags[i]
@@ -106,7 +106,7 @@ if __name__ == '__main__':
     # Fake RL agent
     model = Foo_Model()
 
-    for i in range(len(model)):
+    for epoch in range(len(model)):
  
         # Process batches
         for mbidx, job_batch in enumerate(training_loader):
@@ -115,7 +115,7 @@ if __name__ == '__main__':
             jobs = job_batch['jobs']
 
             # Prediction from NN
-            endMag = model(i)
+            endMag = model(epoch)
 
             # Modify job params for next run
             for job in jobs:
@@ -129,13 +129,16 @@ if __name__ == '__main__':
             job_helper.watch(jobs)
 
             forces = []
-            for job in jobs:
+            for i, job in enumerate(jobs):
                 output = job.read()
                 if not output is None:
-                    forces.append(output[1])
+                    forces.append(output['forces'])
 
-            logger.info('Lets take a look at the output')
-            print(forces)
+                # Add pressure to jobs input metrics
+                inputs[i].add('press', output['press'])
+            
+            logger.info('Lets take a look at the output press')
+            print(inputs[0].get('press'))
 
             # Here you should calculate your loss, backprop and optimize
             # [code here]

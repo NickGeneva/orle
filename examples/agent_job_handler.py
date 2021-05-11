@@ -199,6 +199,16 @@ class CylinderJob(ORLEJobBase):
             }
         }
 
+        probes = {
+            'func': 'get_probes',
+            'outputname': 'press',
+            'params': {
+                'function_name': 'probes',
+                'field': 'p',
+                'time_step': self.start_time
+            }
+        }
+
         config = {
             'id': self.id,
             'name': 'cylinder',
@@ -206,7 +216,7 @@ class CylinderJob(ORLEJobBase):
             'params': {'solver':self.solver, 'np':self.nproc, 'args':self.args, \
                         'decompose':self.decompose, 'reconstruct':self.reconstruct},
             'mods': [control_dict]+jet_boundaries,
-            'post': [forces]
+            'post': [forces, probes]
         }
 
         config_file = os.path.join(self.job_dir, 'cylinder_env{:d}.yml'.format(self.id))
@@ -222,7 +232,7 @@ class CylinderJob(ORLEJobBase):
         """Check job exit status and reads the output force file from job
 
         Returns:
-            tuple: Tuple of time and force data data arrays
+            Dict: Dict of force and pressure data data arrays
         """
         output_path = os.path.join(self.output_dir, "output{:s}.yml".format(self.job_hash))
         with open(output_path, 'r') as stream:
@@ -237,6 +247,7 @@ class CylinderJob(ORLEJobBase):
 
         # If we could read the output log and the environment ended with out errors
         # read in data files.
+        outputs = {}
         if output and output['status'] == 1:
             for file in output['files']:
                 if 'forces' in file:
@@ -244,8 +255,13 @@ class CylinderJob(ORLEJobBase):
                     data = np.load(file_path, allow_pickle = True)[()]
                     # Store necessary output data for the input of the
                     # neural network the next episode
-                    self.output = data['forces']
-                    return data['times'], data['forces']
+                    outputs['forces'] = data['forces']
+                if 'press' in file:
+                    file_path = os.path.join(self.output_dir, file)
+                    data = np.load(file_path, allow_pickle = True)[()]
+                    outputs['press'] = data['probes']
+
+        return outputs
 
 
 class JobDataset(Dataset):
@@ -256,31 +272,65 @@ class JobDataset(Dataset):
     """
     def __init__(
         self, 
-        examples:List
+        jobs:List,
+        inputs:List
     ) -> None:
         super(JobDataset).__init__()
-        self.examples = examples
+        assert len(jobs) == len(inputs), "Inputs and examples"
+        self.jobs = jobs
+        self.inputs = inputs
 
     def __len__(self):
-        return len(self.examples)
+        return len(self.jobs)
 
     def __getitem__(self, i:int):
         """Returns a ORLE job object
         Args:
             i (int): Training example index
         Returns:
-            ORLEJobBase: ORLE job object
+            tuple: input object and ORLE job object
         """
-        return self.examples[i]
+        return self.inputs[i], self.jobs[i]
         
 @dataclass
 class DataCollator:
     """Data collator for the JobDataset
     """
     def __call__(self, examples):
+        print(examples)
+        inputs = [example[0] for example in examples]
+        jobs = [example[1] for example in examples]
+        return {'inputs': inputs, 'jobs': jobs}
 
-        inputs = [example.output for example in examples]
-        return {'inputs': inputs, 'jobs': examples}
+@dataclass
+class InputMetrics:
+    """Simple class for holding history input metrics
+    of specified window size
+    """
+    window: int = 1
+
+    def add(self, name, val):
+        if hasattr(self, name):
+            attrib = getattr(self, name)
+            attrib.append(val)
+            if len(attrib) > self.window:
+                attrib.pop(0)
+            setattr(self, name, attrib)
+        else:
+            setattr(self, name, [val])
+
+    def get(self, name):
+        if hasattr(self, name):
+            return getattr(self, name)
+        return None
+
+    def has(self, name):
+        return hasattr(self, name)
+
+    def delete(self, name):
+        if hasattr(self, name):
+            delattr(self, name)
+
 
 class CylinderJobHandler(object):
     """Class for building training and testing dataloaders
@@ -315,6 +365,7 @@ class CylinderJobHandler(object):
         assert len(viscs) == len(end_times)
 
         examples = []
+        inputs = []
         for i in range(len(viscs)):
             examples.append(
                 CylinderJob(
@@ -328,7 +379,11 @@ class CylinderJobHandler(object):
                 )
             )
 
-        dataset = JobDataset(examples)
+            inputs.append(
+                InputMetrics(window=2)
+            )
+
+        dataset = JobDataset(examples, inputs)
 
         sampler = RandomSampler(dataset)
 
