@@ -229,7 +229,7 @@ class CylinderJob(ORLEJobBase):
     def read(
         self
     ):
-        """Check job exit status and reads the output force file from job
+        """Check job exit status and reads the output files from job
 
         Returns:
             Dict: Dict of force and pressure data data arrays
@@ -253,8 +253,6 @@ class CylinderJob(ORLEJobBase):
                 if 'forces' in file:
                     file_path = os.path.join(self.output_dir, file)
                     data = np.load(file_path, allow_pickle = True)[()]
-                    # Store necessary output data for the input of the
-                    # neural network the next episode
                     outputs['forces'] = data['forces']
                 if 'press' in file:
                     file_path = os.path.join(self.output_dir, file)

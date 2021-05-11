@@ -112,7 +112,7 @@ class OpenFoamPost:
         """Extracts probing data from OpenFOAM files
 
         Args:
-            function_name (str): Name of the force function in the controlDict
+            function_name (str): Name of the probe function in the controlDict
             field (str): Name of the field to get probes from
             time_step (int): initial time-step of simulation
             env_dir (str): Path to OpenFOAM simulation folder. Forced keyword.
