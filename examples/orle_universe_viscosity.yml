@@ -25,7 +25,7 @@ worlds:
       -
         id: 0
         name: env0
-        parallel: False
+        env_files: $LOCAL/../base_files/foo
         mods:
           -
             func: set_viscosity
@@ -34,7 +34,6 @@ worlds:
       -
         id: 1
         name: env1
-        parallel: False
         mods:
           -
             func: set_viscosity
@@ -43,7 +42,6 @@ worlds:
       -
         id: 2
         name: env2
-        parallel: False
         mods:
           -
             func: set_viscosity

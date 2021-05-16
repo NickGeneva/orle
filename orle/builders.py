@@ -51,6 +51,11 @@ class WorldBuilder(object):
             except yaml.YAMLError as exc:
                 logger.error('Error reading the universe configuration file!')
                 logger.error(exc)
+                return None
+
+        if not "worlds" in config.keys():
+            logger.error('Universe configuration file missing world list!')
+            return None
 
         return clean_config(config)
 
@@ -71,6 +76,9 @@ class WorldBuilder(object):
         """
         # Get world config
         world_config = self.get_world_config(id)
+
+        if not self.validate_world_config(world_config):
+            return False
 
         # Create world directory if not initialized
         if overwrite or not self.check_world(world_config):
@@ -106,6 +114,39 @@ class WorldBuilder(object):
         logger.error('World ID {:d} not present in universe config file.'.format(id))
         raise LookupError('Invalid id')
 
+    def validate_world_config(
+        self,
+        world_config: Config
+    ) -> bool:
+        """Validates world config object for essential parameters
+
+        Args:
+            world_config (Config): Configuration object of the world
+
+        Returns:
+            bool: If loaded configuration file is valid
+        """
+        if not isinstance(world_config, dict):
+            logger.error('Loaded world config is not a dictionary.')
+            return False
+        
+        # Required keys of worls
+        req_keys = ['id', 'world_dir', 'job_dir', 'output_dir', 'base_files', 'envs']
+        for key in req_keys:
+            if not key in world_config.keys():
+                logger.error('Required parameter {:s} not in config.'.format(key))
+                return False
+
+        # Check necessary env params
+        req_keys = ['id', 'name', 'mods']
+        for env in world_config['envs']:
+            for key in req_keys:
+                if not key in env.keys():
+                    logger.error('Required environment parameter {:s} not in config.'.format(key))
+                    return False
+
+        return True
+
     def check_world(
         self,
         world_config: Config
@@ -135,7 +176,7 @@ class WorldBuilder(object):
             if not os.path.exists(env_dir):
                 return False
 
-        logger.info('All world folders appear to be setup.')
+        logger.info('All folders for world {} appear to be setup.'.format(world_config['id']))
         return True
 
     def delete_world(
@@ -178,8 +219,18 @@ class WorldBuilder(object):
             # Create folder
             env_dir = os.path.join(world_config['world_dir'], env['name'])
             mkdirs(env_dir)
+
             # Copy base files into environment
             copy_tree(world_files, env_dir, update=1)
+
+            # Copy any custom environment files
+            if 'env_files' in env.keys():
+                if os.path.exists(env['env_files']):
+                    logger.info('Copying custom environment {:d} files.'.format(env['id']))
+                    copy_tree(env['env_files'], env_dir, update=1)
+                else:
+                    logger.error('Custom environment file directory not found. {:s}'.format(env['env_files']))
+
             # Now run through modifications
             for mod in env['mods']:
                 # Check mod is supported

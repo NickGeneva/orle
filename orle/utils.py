@@ -34,7 +34,7 @@ def clean_config(
             # If this is world dict, update path variable
             if "world_dir" in config.keys():
                 CONFIG_VARS['$WORLD'] = config['world_dir']
-
+                
             for k, v in config.items():
                 config[k] = config_search(v)     
         elif isinstance(config, list):
