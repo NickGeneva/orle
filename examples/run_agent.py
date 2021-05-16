@@ -72,7 +72,7 @@ class JobHelper(object):
 
 class Foo_Model(object):
 
-    vel_mags = [1, 2, 1, 2]
+    vel_mags = [1, 2, 1, 2, 0, 1, 0.5, 0]
 
     def __call__(self, i:int):
         return self.vel_mags[i]

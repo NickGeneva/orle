@@ -6,8 +6,9 @@ import logging
 from typing import Dict, List, Tuple, Union 
 from filelock import Timeout, FileLock
 from .builders import EnvironmentBuilder
+from .collectors import EnvironmentCollector
+from .cleaners import EnvironmentCleaner
 from .foam import FOAMRunner
-from .collectors import DataCollector
 from .jlogger import getLogger
 
 logger = getLogger(__name__)
@@ -94,17 +95,22 @@ class OrleProcess(object):
 
         output_flag = self.job_setup()
         if not output_flag:
-            logger.error('Failed job set up, terminating run')
+            logger.error('Failed job set up, terminating run.')
             return
 
         output_flag = self.job_sim()
         if not output_flag:
-            logger.error('Failed job execution, terminating run')
+            logger.error('Failed job execution, terminating run.')
             return
 
         output_flag = self.job_post()
         if not output_flag:
-            logger.error('Failed post processing, terminating run')
+            logger.error('Failed post processing, terminating run.')
+            return
+
+        output_flag = self.job_clean()
+        if not output_flag:
+            logger.error('Failed clean up, terminating run.')
             return
 
     def clean(
@@ -180,9 +186,25 @@ class OrleProcess(object):
             bool: Successful setup
         """
 
-        collector = DataCollector(self.job_config, self.env_dir, self.config['output_dir'])
+        collector = EnvironmentCollector(self.job_config, self.env_dir, self.config['output_dir'])
 
         # Collect data
         out = collector.collect()
+
+        return out
+
+    def job_clean(
+        self
+    ) -> bool:
+        """Cleans openfoam simulation
+
+        Returns:
+            bool: Successful clean up
+        """
+
+        cleaner = EnvironmentCleaner(self.job_config, self.env_dir)
+
+        # Collect data
+        out = cleaner.clean()
 
         return out

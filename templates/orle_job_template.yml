@@ -32,4 +32,9 @@ post:
     func: get_data
     params:
       my_param: 1
-    
+
+clean:
+  -
+    func: set_something
+    params:
+      bool_param: True

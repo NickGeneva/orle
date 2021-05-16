@@ -73,7 +73,7 @@ class FOAMRunner(object):
         """Runs the OpenFOAM simulation
         """
         # Set the control application field for consistency
-        OpenFoamMods.set_control_dict({'application': self.config['params']['solver']}, self.dir)
+        OpenFoamMods.set_control_dict({'application': self.config['params']['solver']}, env_dir=self.dir)
 
         # Single core
         if self.config['params']['np'] == 1:
@@ -159,7 +159,7 @@ class FOAMRunner(object):
 
         for _, line in enumerate(lines):
             if line.lstrip().startswith("endTime"):
-                start_time = float(re.findall(r'\d*\.?\d+', line)[0])
-                return start_time
+                end_time = float(re.findall(r'\d*\.?\d+', line)[0])
+                return end_time
         
         return 0  

@@ -1,6 +1,7 @@
 import os
 import functools
-from typing import Dict
+from typing import Dict, List
+from shutil import rmtree
 from .jlogger import getLogger
 
 logger = getLogger(__name__)
@@ -9,13 +10,9 @@ FUNCTION_SUCCESS = True
 FUNCTION_ERROR = False
 
 
-def parallel_mod(func):
+def parallelmod(func):
     """Decorator for mods to edit files in parallel folders if present
     Removes requirement of decomposing/reconstructing domain between runs
-
-    TODO Args:
-        decompose(bool, optional): Forcing decomposition of domain, so do not
-            attempt to edit the process folders. Defaults to False.
     """
     @functools.wraps(func)
     def parallel_mod_wrapper(
@@ -64,7 +61,7 @@ class OpenFoamMods:
     def set_control_dict(
         cls,
         props,
-        env_dir:str
+        *, env_dir:str
     ) -> bool:
         """Sets core parameters in the control dictionary of simulation.
         This method only edits parameters, it will not add new parameters.
@@ -72,7 +69,7 @@ class OpenFoamMods:
         Args:
             props (Dict): Props to change in the control dict. These props
             must exist in the controlDict to be changed.
-            env_dir (str): Path to OpenFOAM simulation folder
+            env_dir (str): Path to OpenFOAM simulation. Forced keyword.
 
         Returns:
             bool: Successful modification
@@ -120,7 +117,7 @@ class OpenFoamMods:
 
         Args:
             props (Dict): Props to change in the control dict. These props
-            must exist in the decomposeParDict to be changed.
+                must exist in the decomposeParDict to be changed.
             env_dir (str): Path to OpenFOAM simulation folder. Forced keyword.
 
         Returns:
@@ -197,7 +194,7 @@ class OpenFoamMods:
         return FUNCTION_SUCCESS
 
     @classmethod
-    @parallel_mod
+    @parallelmod
     def set_boundary(
         cls,
         field: str,
@@ -263,5 +260,56 @@ class OpenFoamMods:
         # Write text
         with open(field_file, 'w') as file:
             file.write(text)
+
+        return FUNCTION_SUCCESS
+        
+
+    @classmethod
+    @parallelmod
+    def set_saved_field_times(
+        cls,
+        save_interval: float,
+        save_times: List,
+        *, env_dir: str
+    ) -> bool:
+        """Retains the specified time-steps that are of a given interval.
+        Will delete time-step data that does not satisfy the desired. Typically
+        this method should be used for clean up.
+
+        Args:
+            save_interval (float): Inteval to keep time-step data at (e.g. 0.5 will
+                keep 0.0, 0.5, 1.0, 1.5, etc.)
+            save_times (List): List of time-steps to keep, should likely contain the
+                last simulation time-step to ensure simulation can continue.
+            env_dir (str): Path to OpenFOAM simulation folder. Forced keyword.
+
+        Returns:
+            bool: Successful modification
+        """
+        logger.info('Cleaning up current saved time-step folders.')
+
+        # Get saved time-steps
+        time_folders = [float(f) for f in os.listdir(env_dir) if f.replace('.','',1).isnumeric() \
+                        and os.path.isdir(os.path.join(env_dir, f))]
+        
+        # Sort and remove any time state are to be kept
+        time_folders.sort()
+        if not save_times is None:
+            for time in save_times:
+                try:
+                    time_folders.remove(time)
+                except ValueError:
+                    pass                
+
+        # Loop through numeric folders and delete any not on desired interval
+        for time_step in time_folders:
+            if not time_step % save_interval == 0:
+                folder_path = os.path.join(env_dir, '{:g}'.format(time_step))
+                try:
+                    logger.info('Deleting time-step folder {:g}.'.format(time_step))
+                    rmtree(folder_path)
+                except OSError as e:
+                    logger.error('Issue deleting time-step folder: {:s}'.format(e.strerror))
+                    return FUNCTION_ERROR
 
         return FUNCTION_SUCCESS

@@ -12,7 +12,7 @@ logger = getLogger(__name__)
 Config = Union[Dict, List, Tuple]
 
 
-class DataCollector(object):
+class EnvironmentCollector(object):
     """ Collects data from OpenFOAM sim and writes it to numpy arrays
     in the specified output folder.
 
@@ -40,6 +40,9 @@ class DataCollector(object):
         Returns:
             bool: Successful collection of data
         """
+        if not 'post' in self.config.keys():
+            logger.info('No post methods listed. Continuing.')
+            return True
         # Loop through each post processing function
         cleared = 1
         for post in self.config['post']:

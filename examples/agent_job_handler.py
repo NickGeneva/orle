@@ -114,8 +114,9 @@ class CylinderJob(ORLEJobBase):
     def stride_time_range(
         self,
     ):
-        self.start_time = self.end_time
-        self.end_time = self.end_time + self.stride
+        mag = 10**5
+        self.start_time = math.trunc(self.end_time * mag) / mag
+        self.end_time = math.trunc((self.end_time + self.stride)  * mag) / mag
 
     def set_jet(
         self,
@@ -209,6 +210,14 @@ class CylinderJob(ORLEJobBase):
             }
         }
 
+        time_steps = {
+            'func': 'set_saved_field_times',
+            'params': {
+                'save_interval': 0.2,
+                'save_times': [0, self.end_time]
+            }
+        }
+
         config = {
             'id': self.id,
             'name': 'cylinder',
@@ -216,7 +225,8 @@ class CylinderJob(ORLEJobBase):
             'params': {'solver':self.solver, 'np':self.nproc, 'args':self.args, \
                         'decompose':self.decompose, 'reconstruct':self.reconstruct},
             'mods': [control_dict]+jet_boundaries,
-            'post': [forces, probes]
+            'post': [forces, probes],
+            'clean': [time_steps]
         }
 
         config_file = os.path.join(self.job_dir, 'cylinder_env{:d}.yml'.format(self.id))

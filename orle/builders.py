@@ -154,7 +154,7 @@ class WorldBuilder(object):
             logger.warning('Deleting world contents.')
             rmtree(world_config['world_dir'])
         except OSError as e:
-            logger.warning('Issue deleting world contents: {:s}'.format(e.strerror))
+            logger.error('Issue deleting world contents: {:s}'.format(e.strerror))
 
     def build_world(
         self,
@@ -275,7 +275,7 @@ class EnvironmentBuilder(object):
             return False
         
         # Required keys
-        req_keys = ['id', 'name', 'hash', 'params', 'mods', 'post']
+        req_keys = ['id', 'name', 'hash', 'params']
         for key in req_keys:
             if not key in self.config.keys():
                 logger.error('Required parameter {:s} not in config.'.format(key))
@@ -319,6 +319,9 @@ class EnvironmentBuilder(object):
         Returns:
             Config: Initialized world configuration
         """
+        if not 'mods' in self.config.keys():
+            logger.info('No mods listed. Continuing.')
+            return True
         # Run each modification function for this environment
         cleared = 1
         for mod in self.config['mods']:
@@ -331,7 +334,6 @@ class EnvironmentBuilder(object):
                 cleared = 0
 
         return bool(cleared)
-
 
     def validate_env(
         self

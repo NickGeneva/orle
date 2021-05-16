@@ -13,7 +13,6 @@ FILE_NAMES = {
     'get_probes': 'probes'
 }
 
-
 class OpenFoamPost:
 
     @classmethod
