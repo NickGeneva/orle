@@ -48,14 +48,23 @@ class FOAMRunner(object):
         if cleared == 0:
             logger.warning('Failed to successfully modify the decomposeParDict.')
 
-        # Check to see if process folders are set up with the start times
+            
+        # Validate the existing processor folders
+        proc_folders = [os.path.join(self.dir, f) for f in os.listdir(self.dir) \
+                         if f.startswith('processor') and os.path.isdir(os.path.join(self.dir, f))]
+
         folders = True
-        for i in range(self.config['params']['np']):
-            proc_folder = os.path.join(self.dir, 'processor{:d}'.format(i), '{:g}'.format(start_time))
-            if not os.path.exists(proc_folder):
-                logger.warning( 'Necessary process folder {:s} not found, forcing decomposePar.'.format(proc_folder))
-                folders = False
-                break
+        if not len(proc_folders) == self.config['params']['np']:
+            logger.warning( 'Inconsistent number of processor folders found, forcing decomposePar.' )
+            folders = False
+        else:
+            # If consistent processor folders, check each for initial time-step folder
+            for i in range(self.config['params']['np']):
+                proc_folder = os.path.join(self.dir, 'processor{:d}'.format(i), '{:g}'.format(start_time))
+                if not os.path.exists(proc_folder):
+                    logger.warning( 'Necessary process folder {:s} not found, forcing decomposePar.'.format(proc_folder))
+                    folders = False
+                    break
         
         if not folders or self.config['params']['decompose'] or force:
             logger.warning('Decomposing domain.')
