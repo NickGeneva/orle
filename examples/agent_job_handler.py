@@ -84,7 +84,7 @@ class CylinderJob(ORLEJobBase):
         # Simulation time range
         self.start_time = start_time
         self.end_time = end_time
-        self.stride = end_time - start_time
+        self.stride = round(end_time - start_time, 5)
 
         # Jet paramters
         default_table = "table (({:g} (0.0 0.0 0.0)))".format(start_time)
@@ -114,9 +114,8 @@ class CylinderJob(ORLEJobBase):
     def stride_time_range(
         self,
     ):
-        mag = 10**5
-        self.start_time = math.trunc(self.end_time * mag) / mag
-        self.end_time = math.trunc((self.end_time + self.stride)  * mag) / mag
+        self.start_time = round(self.end_time, 5)
+        self.end_time = round(self.end_time + self.stride, 5)
 
     def set_jet(
         self,
