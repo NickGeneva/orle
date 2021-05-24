@@ -209,39 +209,16 @@ Transfinite Surface {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
 //+
 Recombine Surface {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
 
-// Sensor Region
+// Box around cylinder
 Point(50) = {0.15, 0.15, 0, 1.0};
-//+
-Point(51) = {0.3, 0.15, 0, 1.0};
 //+
 Point(52) = {0.15, -0.15, 0, 1.0};
 //+
-Point(53) = {0.3, -0.15, 0, 1.0};
-//+
-Line(97) = {50, 51};
-//+
-Line(98) = {51, 53};
-//+
-Line(99) = {53, 52};
-//+
-Line(100) = {52, 50};
-//+
-Transfinite Curve {98, 100} = 2*sres Using Progression 1.0;//+
-//+
-Transfinite Curve {97, 99} = sres Using Progression 1.0;//+
-//+
-Curve Loop(61) = {100, 97, 98, 99};
-//+
-Plane Surface(61) = {61};
-// +
-Transfinite Surface {61};
-//+
-Recombine Surface {61};
-
-// Box around cylinder
 Point(58) = {-0.15, 0.15, 0, 1.0};
 //+
 Point(59) = {-0.15, -0.15, 0, 1.0};
+//+
+Line(100) = {52, 50};
 //+
 Line(109) = {50, 58};
 //+
@@ -249,7 +226,7 @@ Line(110) = {58, 59};
 //+
 Line(111) = {59, 52};
 //+
-Transfinite Curve {109, 110, 111} = outres Using Progression 1.0;//+
+Transfinite Curve {100, 109, 110, 111} = outres Using Progression 1.0;//+
 //+
 Curve Loop(67) = {22, 23, 24, 13, 14, 15, 16, 17, 18, 19, 20, 21};
 //+
@@ -277,37 +254,35 @@ Line(147) = {77, 76};
 Transfinite Curve {144, 146} = 3*outres Using Progression 1.0; 
 Transfinite Curve {145, 147} = outres Using Progression 1.0;
 //+
-Curve Loop(87) = {111, -99, -98, -97, 109, 110};
-//+
 Curve Loop(88) = {146, 147, 144, 145};
 //+
-Plane Surface(87) = {88, 87};
+Plane Surface(87) = {88, 68};
 
 
 Extrude {0, 0, 0.01} {
-  Surface{10}; Surface{11}; Surface{12}; Surface{1}; Surface{2}; Surface{4}; Surface{5}; Surface{6}; Surface{7}; Surface{8}; Surface{9}; Surface{68}; Surface{61}; Surface{87}; Surface{3}; 
+  Surface{10}; Surface{11}; Surface{12}; Surface{1}; Surface{2}; Surface{4}; Surface{5}; Surface{6}; Surface{7}; Surface{8}; Surface{9}; Surface{68}; Surface{87}; Surface{3}; 
   Layers {1}; 
   Recombine;
 }
 //+
-Physical Surface("inlet", 229) = {144};
+Physical Surface("inlet", 224) = {140};
 //+
-Physical Surface("wall", 230) = {145, 143};
+Physical Surface("wall", 225) = {141, 139};
 //+
-Physical Surface("outlet", 231) = {146};
+Physical Surface("outlet", 226) = {142};
 //+
-Physical Surface("cylinder", 232) = {101, 148, 109, 118, 122, 130, 88, 97};
+Physical Surface("cylinder", 227) = {101, 109, 144, 118, 122, 97, 130, 88};
 //+
-Physical Surface("jet1", 233) = {114};
+Physical Surface("jet1", 228) = {114};
 //+
-Physical Surface("jet2", 234) = {105};
+Physical Surface("jet2", 229) = {105};
 //+
-Physical Surface("jet3", 235) = {93};
+Physical Surface("jet3", 230) = {126};
 //+
-Physical Surface("jet4", 236) = {126};
+Physical Surface("jet4", 231) = {93};
 //+
-Physical Surface("cyclic1", 237) = {87, 61, 68, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+Physical Surface("cyclic1", 232) = {143, 138, 100, 121, 125, 113, 145, 108, 117, 129, 132, 92, 96, 104};
 //+
-Physical Surface("cyclic2", 238) = {147, 138, 121, 117, 113, 149, 108, 104, 100, 96, 92, 132, 129, 125, 142};
+Physical Surface("cyclic2", 233) = {87, 68, 1, 7, 12, 6, 5, 3, 2, 4, 10, 11, 8, 9};
 //+
-Physical Volume("Volume", 239) = {14, 13, 12, 3, 2, 11, 9, 8, 7, 6, 15, 5, 4, 10, 1};
+Physical Volume("Volume", 234) = {4, 14, 5, 7, 9, 10, 2, 8, 3, 6, 1, 11, 13, 12};

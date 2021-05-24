@@ -17,77 +17,79 @@ FoamFile
 
 10
 (
-    cyclic1
-    {
-        type    cyclic;
-        inGroups    1(cyclic);
-        neighbourPatch  cyclic2;
-        nFaces          13513;
-        startFace       22447;
-    }
     cyclic2
     {
         type    cyclic;
         inGroups    1(cyclic);
         neighbourPatch  cyclic1;
-        nFaces          13513;
-        startFace       35960;
+        physicalType    patch;
+        nFaces          10308;
+        startFace       16784;
+    }
+    cyclic1
+    {
+        type    cyclic;
+        inGroups    1(cyclic);
+        neighbourPatch  cyclic2;
+        physicalType    patch;
+        nFaces          10308;
+        startFace       27092;
     }
     cylinder
     {
         type    wall;
         physicalType wall;
         nFaces          148;
-        startFace       49473;
-    }
-    jet3
-    {
-        type            patch;
-        physicalType    patch;
-        nFaces          3;
-        startFace       49621;
-    }
-    jet2
-    {
-        type            patch;
-        physicalType    patch;
-        nFaces          3;
-        startFace       49624;
-    }
-    jet1
-    {
-        type            patch;
-        physicalType    patch;
-        nFaces          3;
-        startFace       49627;
+        startFace       37400;
     }
     jet4
     {
         type            patch;
         physicalType    patch;
         nFaces          3;
-        startFace       49630;
+        startFace       37548;
+    }
+    jet2
+    {
+        type            patch;
+        physicalType    patch;
+        nFaces          3;
+        startFace       37551;
+    }
+    jet1
+    {
+        type            patch;
+        physicalType    patch;
+        nFaces          3;
+        startFace       37554;
+    }
+    jet3
+    {
+        type            patch;
+        physicalType    patch;
+        nFaces          3;
+        startFace       37557;
     }
     wall
     {
         type    wall;
         physicalType wall;
         nFaces          178;
-        startFace       49633;
+        startFace       37560;
     }
     inlet
     {
         type            patch;
         physicalType    patch;
         nFaces          29;
-        startFace       49811;
+        startFace       37738;
     }
     outlet
     {
         type            patch;
         physicalType    patch;
         nFaces          29;
-        startFace       49840;
+        startFace       37767;
     }
 )
 
