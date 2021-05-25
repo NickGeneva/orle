@@ -257,7 +257,7 @@ class CylinderJob(ORLEJobBase):
         # If we could read the output log and the environment ended with out errors
         # read in data files.
         outputs = {}
-        if output and output['status'] == 1:
+        if output and output['status'] == 0: # Zero status = no ORLE issues
             for file in output['files']:
                 if 'forces' in file:
                     file_path = os.path.join(self.output_dir, file)

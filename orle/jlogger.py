@@ -34,7 +34,7 @@ class RootJobLogger(object):
     def clean(self) -> None:
         """Resets job log
         """
-        self.log.status = 1
+        self.log.status = 0
         self.log.warnings = []
         self.log.errors = []
         self.log.files = []
@@ -88,7 +88,7 @@ class RootJobLogger(object):
         Args:
             message (str): error message
         """
-        self.log.status = 0
+        self.log.status = 1
         self.log.errors.append(message)
 
     def add_output(

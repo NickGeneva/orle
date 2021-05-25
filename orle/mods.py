@@ -2,6 +2,7 @@ import os
 import functools
 from typing import Dict, List
 from shutil import rmtree
+from decimal import Decimal
 from .jlogger import getLogger
 
 logger = getLogger(__name__)
@@ -289,7 +290,7 @@ class OpenFoamMods:
         logger.info('Cleaning up current saved time-step folders.')
 
         # Get saved time-steps
-        time_folders = [float(f) for f in os.listdir(env_dir) if f.replace('.','',1).isnumeric() \
+        time_folders = [f for f in os.listdir(env_dir) if f.replace('.','',1).isnumeric() \
                         and os.path.isdir(os.path.join(env_dir, f))]
         
         # Sort and remove any time state are to be kept
@@ -297,13 +298,13 @@ class OpenFoamMods:
         if not save_times is None:
             for time in save_times:
                 try:
-                    time_folders.remove(time)
+                    time_folders.remove(str(time))
                 except ValueError:
                     pass                
 
         # Loop through numeric folders and delete any not on desired interval
         for time_step in time_folders:
-            if not time_step % save_interval == 0:
+            if not Decimal(time_step) % Decimal(str(save_interval)) == 0:
                 folder_path = os.path.join(env_dir, '{:g}'.format(time_step))
                 try:
                     logger.info('Deleting time-step folder {:g}.'.format(time_step))
