@@ -305,9 +305,9 @@ class OpenFoamMods:
         # Loop through numeric folders and delete any not on desired interval
         for time_step in time_folders:
             if not Decimal(time_step) % Decimal(str(save_interval)) == 0:
-                folder_path = os.path.join(env_dir, '{:g}'.format(time_step))
+                folder_path = os.path.join(env_dir, time_step)
                 try:
-                    logger.info('Deleting time-step folder {:g}.'.format(time_step))
+                    logger.info('Deleting time-step folder {:s}.'.format(time_step))
                     rmtree(folder_path)
                 except OSError as e:
                     logger.error('Issue deleting time-step folder: {:s}'.format(e.strerror))
