@@ -1,189 +1,95 @@
-#!/usr/bin/env python
-
-# Copyright (C) 2003-2007  Robey Pointer <robeypointer@gmail.com>
-#
-# This file is part of paramiko.
-#
-# Paramiko is free software; you can redistribute it and/or modify it under the
-# terms of the GNU Lesser General Public License as published by the Free
-# Software Foundation; either version 2.1 of the License, or (at your option)
-# any later version.
-#
-# Paramiko is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-# A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
-# details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with Paramiko; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
-
-import base64
-from binascii import hexlify
 import os
 import socket
-import sys
+import rsa
 import threading
-import traceback
+import pickle
+from cryptography.fernet import Fernet
+import hashlib
+import time
+import logging
+from typing import Tuple
 
-import paramiko
-from paramiko.py3compat import b, u, decodebytes
+logger = logging.getLogger(__name__)
 
+Socket = socket.socket
 
-# setup logging
-paramiko.util.log_to_file("demo_server.log")
+class ORLE_Server(object):
+    """ORLE Jobe Server
 
-host_key = paramiko.RSAKey(filename="test_rsa.key")
-# host_key = paramiko.DSSKey(filename='test_dss.key')
+    Args:
+        object ([type]): [description]
+    """
+    def __init__(
+        self, 
+        public_rsa_file: str = None, 
+        private_rsa_file: str = None, 
+        addr: Tuple = ('localhost', 8080),
+        backlog: int = 5,
+    ) -> None:
+        super().__init__()
 
-print("Read key: " + u(hexlify(host_key.get_fingerprint())))
+        self.interrupt = False # Safe interrupt
 
+        # Set up private and public RSA keys for asymmetric encryption
+        # Create new keys
+        if public_rsa_file is None or private_rsa_file is None:
+            asyKey = rsa.newkeys(2048)
+            # Public key and private key
+            self.public_key = self.asyKey[0]
+            self.private_key = self.asyKey[1] 
+            # Save key to Privacy Enhanced Mail (PEM) files
+            with open ("public_rsa.key", "w") as key_file:
+                key_file.write( self.public_key.save_pkcs1(format='PEM') )
 
-class Server(paramiko.ServerInterface):
-    # 'data' is the output of base64.b64encode(key)
-    # (using the "user_rsa_key" files)
-    data = (
-        b"AAAAB3NzaC1yc2EAAAABIwAAAIEAyO4it3fHlmGZWJaGrfeHOVY7RWO3P9M7hp"
-        b"fAu7jJ2d7eothvfeuoRFtJwhUmZDluRdFyhFY/hFAh76PJKGAusIqIQKlkJxMC"
-        b"KDqIexkgHAfID/6mqvmnSJf0b5W8v5h2pI/stOSwTQ+pxVhwJ9ctYDhRSlF0iT"
-        b"UWT10hcuO4Ks8="
-    )
-    good_pub_key = paramiko.RSAKey(data=decodebytes(data))
+            with open ("private_rsa.key", "w") as pub_file:
+                key_file.write( self.private_key.save_pkcs1(format='PEM') )
+        # Load pregenerated keys from file
+        else:
+            if not os.path.exists(public_rsa_file) or not os.path.exists(private_rsa_file):
+                raise FileNotFoundError("Provided rsa PEM files not found.")
 
-    def __init__(self):
-        self.event = threading.Event()
+            with open (public_rsa_file, "r") as key_file:
+                self.public_key = rsa.PublicKey.load_pkcs1(key_file.read())
 
-    def check_channel_request(self, kind, chanid):
-        if kind == "session":
-            return paramiko.OPEN_SUCCEEDED
-        return paramiko.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
+            with open (private_rsa_file, "r") as key_file:
+                self.public_key = rsa.PrivateKey.load_pkcs1(key_file.read())
+            self.private_key = rsa.PrivateKey.load_pkcs1(private_rsa_file)
 
-    def check_auth_password(self, username, password):
-        print(username, password)
-        if (username == "test") and (password == "test"):
-            return paramiko.AUTH_SUCCESSFUL
-        return paramiko.AUTH_FAILED
+        # Now we set up the servers main socket for authenticating clients
+        self.serverSocket = socket.socket()
+        # Bind the listening IP address and port number
+        self.serverSocket.bind(addr)
+        # 
+        self.serverSocket.listen(backlog)
 
-    def check_auth_publickey(self, username, key):
-        print("Auth attempt with key: " + u(hexlify(key.get_fingerprint())))
-        if (username == "robey") and (key == self.good_pub_key):
-            return paramiko.AUTH_SUCCESSFUL
-        return paramiko.AUTH_FAILED
+    def start(
+        self
+    ) -> None:
 
-    def check_auth_gssapi_with_mic(
-        self, username, gss_authenticated=paramiko.AUTH_FAILED, cc_file=None
-    ):
-        """
-        .. note::
-            We are just checking in `AuthHandler` that the given user is a
-            valid krb5 principal! We don't check if the krb5 principal is
-            allowed to log in on the server, because there is no way to do that
-            in python. So if you develop your own SSH server with paramiko for
-            a certain platform like Linux, you should call ``krb5_kuserok()`` in
-            your local kerberos library to make sure that the krb5_principal
-            has an account on the server and is allowed to log in as a user.
-
-        .. seealso::
-            `krb5_kuserok() man page
-            <http://www.unix.com/man-page/all/3/krb5_kuserok/>`_
-        """
-        if gss_authenticated == paramiko.AUTH_SUCCESSFUL:
-            return paramiko.AUTH_SUCCESSFUL
-        return paramiko.AUTH_FAILED
-
-    def check_auth_gssapi_keyex(
-        self, username, gss_authenticated=paramiko.AUTH_FAILED, cc_file=None
-    ):
-        if gss_authenticated == paramiko.AUTH_SUCCESSFUL:
-            return paramiko.AUTH_SUCCESSFUL
-        return paramiko.AUTH_FAILED
-
-    def enable_auth_gssapi(self):
-        return True
-
-    def get_allowed_auths(self, username):
-        return "gssapi-keyex,gssapi-with-mic,password,publickey"
-
-    def check_channel_shell_request(self, channel):
-        self.event.set()
-        return True
-
-    def check_channel_pty_request(
-        self, channel, term, width, height, pixelwidth, pixelheight, modes
-    ):
-        return True
+        # Start loop to monitor port
+        while(True):
+            # Accept socket message
+            clientSocket, addr = self.serverSocket.accept()
+            # Use multithread the authentication process to allow multiple
+            # Clients to connect
+            t = threading.Thread(target=self.authenticate_client, args=(clientSocket, addr))
+            t.start()
 
 
-DoGSSAPIKeyExchange = False
+    def authenticate_client(
+        self,
+        clientSocket: Socket,
+        addr: Tuple
+    ) -> None:
 
-# now connect
-try:
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(("", 2200))
-except Exception as e:
-    print("*** Bind failed: " + str(e))
-    traceback.print_exc()
-    sys.exit(1)
+        logger.info('Client detected from address {:s}'.format(addr[0]))
 
-print(sock.getsockname())
+        publicKeyPK, pubKeySha256 = pickle.loads(clientSocket.recv(1024))
 
-try:
-    sock.listen(100)
-    print("Listening for connection ...")
-    client, addr = sock.accept()
 
-except Exception as e:
-    print("*** Listen/accept failed: " + str(e))
-    traceback.print_exc()
-    sys.exit(1)
 
-print("Got a connection!")
 
-try:
-    t = paramiko.Transport(client, gss_kex=DoGSSAPIKeyExchange)
-    t.set_gss_host(socket.getfqdn(""))
-    try:
-        t.load_server_moduli() # Load precomputed prime moduli
-    except:
-        print("(Failed to load moduli -- gex will be unsupported.)")
-        raise
-    t.add_server_key(host_key)
-    server = Server()
-    try:
-        t.start_server(server=server)
-    except paramiko.SSHException:
-        print("*** SSH negotiation failed.")
-        sys.exit(1)
-
-    # wait for auth
-    chan = t.accept(20)
-    if chan is None:
-        print("*** No channel.")
-        sys.exit(1)
-    print("Authenticated!")
-
-    server.event.wait(10)
-    if not server.event.is_set():
-        print("*** Client never asked for a shell.")
-        sys.exit(1)
-
-    chan.send("\r\n\r\nWelcome to my dorky little BBS!\r\n\r\n")
-    chan.send(
-        "We are on fire all the time!  Hooray!  Candy corn for everyone!\r\n"
-    )
-    chan.send("Happy birthday to Robot Dave!\r\n\r\n")
-    chan.send("Username: ")
-    f = chan.makefile("rU")
-    username = f.readline().strip("\r\n")
-    chan.send("\r\nI don't like you, " + username + ".\r\n")
-    chan.close()
-
-except Exception as e:
-    print("*** Caught exception: " + str(e.__class__) + ": " + str(e))
-    traceback.print_exc()
-    try:
-        t.close()
-    except:
-        pass
-    sys.exit(1)
+    def stop(
+        self
+    ) -> None:
+        self.interupt = False
