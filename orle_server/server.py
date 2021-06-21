@@ -84,7 +84,21 @@ class ORLE_Server(object):
 
         logger.info('Client detected from address {:s}'.format(addr[0]))
 
-        publicKeyPK, pubKeySha256 = pickle.loads(clientSocket.recv(1024))
+        # First send and recv public keys
+
+        # Check public sha key with saved one in file (client)
+
+        # Wait for password
+
+        # Verify password
+
+        # Generate encryption key for fernet
+
+        # Send key to client
+
+        # Add client socket to either list of slaves
+
+        # Or init a master thread to listen for configs
 
 
 
