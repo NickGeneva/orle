@@ -1,4 +1,5 @@
 import os
+import sys
 import socket
 import rsa
 import threading
@@ -8,6 +9,7 @@ import hashlib
 import time
 import logging
 from typing import Tuple
+from .server_utils import SocketUtils
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +27,7 @@ class ORLE_Server(object):
         private_rsa_file: str = None, 
         addr: Tuple = ('localhost', 8080),
         backlog: int = 5,
+        timeout: float = 0.25
     ) -> None:
         super().__init__()
 
@@ -59,7 +62,7 @@ class ORLE_Server(object):
         self.serverSocket = socket.socket()
         # Bind the listening IP address and port number
         self.serverSocket.bind(addr)
-        # 
+        self.serverSocket.settimeout(timeout) # timeout for listening
         self.serverSocket.listen(backlog)
 
     def start(
@@ -67,14 +70,21 @@ class ORLE_Server(object):
     ) -> None:
 
         # Start loop to monitor port
-        while(True):
-            # Accept socket message
-            clientSocket, addr = self.serverSocket.accept()
-            # Use multithread the authentication process to allow multiple
-            # Clients to connect
-            t = threading.Thread(target=self.authenticate_client, args=(clientSocket, addr))
-            t.start()
+        while(not self.interrupt):
+            try:
+                # Accept socket message
+                clientSocket, addr = self.serverSocket.accept()
+                # Use multithread the authentication process to allow multiple
+                # Clients to connect
+                t = threading.Thread(target=self.authenticate_client, args=(clientSocket, addr))
+                t.start()
+            except socket.timeout:
+                pass
+            except:
+                logger.error("Unexpected error, {}".format(sys.exc_info()[0]))
+                raise
 
+            time.sleep(0.1)
 
     def authenticate_client(
         self,
@@ -85,6 +95,7 @@ class ORLE_Server(object):
         logger.info('Client detected from address {:s}'.format(addr[0]))
 
         # First send and recv public keys
+
 
         # Check public sha key with saved one in file (client)
 
@@ -99,8 +110,6 @@ class ORLE_Server(object):
         # Add client socket to either list of slaves
 
         # Or init a master thread to listen for configs
-
-
 
 
     def stop(
