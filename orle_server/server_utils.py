@@ -4,6 +4,7 @@ import socket
 import hashlib
 import logging
 import rsa
+from cryptography.fernet import Fernet
 from rsa import VerificationError
 
 logger = logging.getLogger(__name__)
@@ -94,10 +95,9 @@ class SocketUtils:
         if not isinstance(message, tuple) or not len(message) == 2:
             logger.error("Received message did not include payload and signature")
             return None 
-
+        # Verify payload with signature
         serial_message = message[0]
         signature_sha256 = message[1]
-
         if hashlib.sha256(serial_message).hexdigest() != signature_sha256:
             raise VerificationError("Payload has been tampered!")
 
@@ -127,9 +127,8 @@ class SocketUtils:
         signature_RSA = rsa.sign(serial_message, private_key, hash_method='SHA-256')
         signed_message = pickle.dumps(tuple(serial_message, signature_RSA))
         # Encrypt and send
-        encrypted_message = rsa.encrypt(serial_message, public_key)
+        encrypted_message = rsa.encrypt(signed_message, public_key)
         cls.send_msg(encrypted_message, socket)
-
 
     @classmethod
     def recv_rsa(
@@ -138,7 +137,7 @@ class SocketUtils:
         private_key: PrivateKey,
         socket: Socket,
     ) -> None:
-        """Sends a RSA encrypted message 
+        """Receives a RSA encrypted message.
 
         Args:
             message (object): Python object to send
@@ -153,6 +152,57 @@ class SocketUtils:
 
         # Verify payload and signature
         rsa.verify(serial_message, signature_RSA, public_key)
+
+        message = pickle.loads(serial_message)
+
+        return message
+
+    @classmethod
+    def send_fernet(
+        cls,
+        message,
+        fernet: Fernet,
+        socket: Socket,
+    ) -> None:
+        """Sends a fernet AES-128 encrypted message with SHA-256 signature
+
+        Args:
+            message (object): Python object to send
+            fernet (Fernet): Initialized Fernet encryption class
+            socket (Socket): socket connection
+        """
+        serial_message = pickle.dumps(message)
+        # First sign message with SHA-256 hash
+        signature_sha256 = hashlib.sha256(serial_message).hexdigest()
+        signed_message = pickle.dumps(tuple(serial_message, signature_sha256))
+
+        # Encrypt and send
+        encrypted_message = fernet.encrypt(signed_message)
+        cls.send_msg(encrypted_message, socket)
+
+    @classmethod
+    def recv_fernet(
+        cls,
+        fernet: Fernet,
+        socket: Socket,
+    ) -> None:
+        """Receive a fernet AES-128 encrypted message with SHA-256 signature.
+
+        Args:
+            message (object): Python object to send
+            fernet (Fernet): Initialized Fernet encryption class
+            socket (Socket): socket connection
+        """
+        # Receive and decrypt
+        encrypted_message = cls.recv_msg(socket)
+        message = fernet.decrypt(encrypted_message)
+        serial_message, signature_sha256 = pickle.loads(message)
+
+        # Verify payload and signature
+        serial_message = message[0]
+        signature_sha256 = message[1]
+        if hashlib.sha256(serial_message).hexdigest() != signature_sha256:
+            raise VerificationError("Payload has been tampered!")
 
         message = pickle.loads(serial_message)
 
