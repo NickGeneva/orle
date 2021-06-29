@@ -3,13 +3,12 @@ import sys
 import socket
 import rsa
 import threading
-import pickle
 from cryptography.fernet import Fernet
-import hashlib
 import time
 import logging
 from typing import Tuple
-from .server_utils import SocketUtils
+from .socket_utils import SocketUtils
+from .messages import MessageUtils as mu
 
 logger = logging.getLogger(__name__)
 
@@ -93,24 +92,64 @@ class ORLE_Server(object):
     ) -> None:
 
         logger.info('Client detected from address {:s}'.format(addr[0]))
+        su = SocketUtils()
 
         # First send and recv public keys
+        SocketUtils.send_unencrypted(self.public_key.save_pkcs1(format='PEM'), clientSocket)
 
+        client_key_bytes = SocketUtils.recv_rsa(self.public_key, self.private_key, clientSocket)
+        try:
+            client_key = rsa.PublicKey.load_pkcs1(client_key_bytes)
+        except:
+            logging.error(' Not a valid PEM rsa key, cannot authenticate client.')
+            return
 
         # Check public sha key with saved one in file (client)
 
         # Wait for password
-
-        # Verify password
+        msg = SocketUtils.recv_rsa(self.public_key, self.private_key, clientSocket)
+        try:
+            user, passw = mu.load_login(msg)
+            # Verify password
+            auth = self.client_login(user, passw)
+            if not auth:
+                logging.error('Username and password of client not valid.')
+                SocketUtils.send_rsa({'auth_status', False}, client_key, self.private_key, clientSocket)
+                return
+            SocketUtils.send_rsa({'auth_status', True}, client_key, self.private_key, clientSocket)
+        except:
+            logging.error('Not a valid log in message.')
+            return
 
         # Generate encryption key for fernet
+        sym_key = Fernet.generate_key()
 
         # Send key to client
+        SocketUtils.send_rsa(sym_key, client_key, self.private_key, clientSocket)
+
+        # Recv client config from client
+        config = SocketUtils.recv_fernet(sym_key, clientSocket)
+
 
         # Add client socket to either list of slaves
 
         # Or init a master thread to listen for configs
 
+    def client_login(
+        self,
+        user: str,
+        psw: str
+    ) -> bool:
+        """Verify client username and password
+
+        Args:
+            user (str): username
+            pass (str): password
+
+        Returns:
+            bool: Client is authenticated
+        """
+        return (user == 'user') and (psw == 'pass')
 
     def stop(
         self
