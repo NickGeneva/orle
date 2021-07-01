@@ -4,7 +4,7 @@ import logging
 
 from dataclasses import dataclass, field
 from typing import List
-from filelock import FileLock
+from filelock import FileLock, Timeout
 
 LOGS = {}
 
@@ -113,10 +113,16 @@ class RootJobLogger(object):
         """
         output = {"status": self.log.status, "warnings": self.log.warnings, 
                     "errors": self.log.errors, "files": self.log.files}
-        with FileLock(file_path+".lock"):
-            with open(file_path, 'w') as file:
-                yaml.dump(output, file, default_flow_style=False)
-
+        
+        lock = FileLock(file_path+'.lock')
+        try:
+            with lock.acquire(timeout=1):
+                with open(file_path, 'w') as file:
+                    yaml.dump(output, file, default_flow_style=False)
+        except Timeout:
+            self.warning('Failed to write log to file.')
+            pass
+            
         # Must manually delete lock on unix systems
         if os.path.exists(file_path+".lock"):
             os.remove(file_path+".lock")

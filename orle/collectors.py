@@ -52,9 +52,9 @@ class EnvironmentCollector(object):
                 cleared = cleared * (not out is None)
 
                 if 'outputname' in post.keys():
-                    file_name =  post['outputname'] + str(self.config['hash']) + '.npy'
+                    file_name =  post['outputname'] + '.' + str(self.config['hash']) + '.npy'
                 else:
-                    file_name =  FILE_NAMES[post['func']] + str(self.config['hash']) + '.npy'
+                    file_name =  FILE_NAMES[post['func']] + '.' + str(self.config['hash']) + '.npy'
                 file_path = os.path.join(self.output_dir, file_name)
                 if os.path.exists(file_path):
                     logger.warning('Output file {:s} exists, overwriting.'.format(file_name))
@@ -71,7 +71,7 @@ class EnvironmentCollector(object):
                 cleared = 0
 
         # Finally write output job log
-        output_file_path = os.path.join(self.output_dir, "output"+str(self.config['hash'])+".yml")
+        output_file_path = os.path.join(self.output_dir, "output."+str(self.config['hash'])+".yml")
         logger.write(output_file_path)
 
         return bool(cleared)

@@ -4,8 +4,8 @@ ORLE jobs. The job class should be modified for each specific numerical
 study. Writing configs and reading output files should be handled here. 
 """
 import os
-import math
 import yaml
+import hashlib
 import logging
 import random
 import numpy as np
@@ -36,6 +36,7 @@ class ORLEJobBase(object):
         self.decompose = decompose
         self.id = env_id
         self.job_hash = ''
+        self.sha = hashlib.sha256()
 
     def get_env_id(
         self
@@ -159,7 +160,8 @@ class CylinderJob(ORLEJobBase):
             (str): job hash id
         """
         if job_hash is None:
-            self.job_hash = str(random.randint(0, 1000000))
+            self.sha.update(bytes(random.randint(0, 100)))
+            self.job_hash = self.sha.hexdigest()[:10]
         else:
             self.job_hash = job_hash
 
@@ -228,11 +230,20 @@ class CylinderJob(ORLEJobBase):
             'clean': [time_steps]
         }
 
-        config_file = os.path.join(self.job_dir, 'cylinder_env{:d}.yml'.format(self.id))
+        config_file = os.path.join(self.job_dir, 'cylinder_env{:d}.{:s}.yml'.format(self.id, self.job_hash))
         logger.info('Writing job config file {:s}'.format(config_file))
-        with FileLock(config_file+".lock"):
-            with open(config_file, 'w') as file:
-                yaml.dump(config, file, default_flow_style=False)
+
+        lock = FileLock(config_file+'.lock')
+        try:
+            with lock.acquire(timeout=1):
+                with open(config_file, 'w') as file:
+                    yaml.dump(config, file, default_flow_style=False)
+        except:
+            logger.error('Failed to write config file for some reason!')
+
+        # with FileLock(config_file+".lock"):
+        #     with open(config_file, 'w') as file:
+        #         yaml.dump(config, file, default_flow_style=False)
 
 
     def read(
@@ -243,7 +254,7 @@ class CylinderJob(ORLEJobBase):
         Returns:
             Dict: Dict of force and pressure data data arrays
         """
-        output_path = os.path.join(self.output_dir, "output{:s}.yml".format(self.job_hash))
+        output_path = os.path.join(self.output_dir, "output.{:s}.yml".format(self.job_hash))
         with open(output_path, 'r') as stream:
             try:
                 output = yaml.safe_load(stream)

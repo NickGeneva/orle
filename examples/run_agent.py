@@ -60,7 +60,7 @@ class JobHelper(object):
             filenames = [f for f in os.listdir(self.output_dir) \
                 if os.path.isfile(os.path.join(self.output_dir, f))]
 
-            output_files = ['output{:s}.yml'.format(job_id) for job_id in job_hashes]
+            output_files = ['output.{:s}.yml'.format(job_id) for job_id in job_hashes]
             for file in output_files:
                 # If output file is not in output directory, we need to wait more.
                 if not file in filenames:

@@ -4,7 +4,7 @@ import random
 import logging
 
 from typing import Dict, List, Tuple, Union 
-from filelock import Timeout, FileLock
+from filelock import FileLock, Timeout
 from .builders import EnvironmentBuilder
 from .collectors import EnvironmentCollector
 from .cleaners import EnvironmentCleaner
@@ -73,16 +73,14 @@ class OrleProcess(object):
             # Only attempt to parse yml files
             if file_path.endswith('.yml'):
                 self.lock = FileLock(file_path+'.lock')
+                try:
+                    with self.lock.acquire(timeout=1):
+                        self.job_file = file_path
+                        logger.info('Acquired job config {:s}'.format(filename))
+                        return True
+                except Timeout:
+                    pass
 
-                # Call hidden function, regular .aquire() is blocking call without Timeout
-                self.lock._acquire()
-                if self.lock.is_locked:
-                    self.lock.acquire()
-                    self.job_file = file_path
-
-                    logger.info('Acquired job config {:s}'.format(filename))
-                    return True
-        
         return False
 
     def run(
