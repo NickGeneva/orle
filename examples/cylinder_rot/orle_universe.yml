@@ -20,12 +20,11 @@ worlds:
     world_dir: $LOCAL/world0
     job_dir: $WORLD/configs
     output_dir: $WORLD/outputs
-    base_files: $LOCAL/../base_files/cylinder
+    base_files: $LOCAL/../base_files/cylinder_rot
     envs:
       -
         id: 0
         name: env0
-        env_files: $LOCAL/../base_files/foo
         mods:
           -
             func: set_viscosity
@@ -38,13 +37,5 @@ worlds:
           -
             func: set_viscosity
             params:
-                visc: 0.002
-      -
-        id: 2
-        name: env2
-        mods:
-          -
-            func: set_viscosity
-            params:
-                visc: 0.003
+                visc: 0.001
         

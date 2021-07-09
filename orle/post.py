@@ -10,6 +10,7 @@ logger = getLogger(__name__)
 FUNCTION_ERROR = None
 FILE_NAMES = {
     'get_forces': 'forces',
+    'get_coeff': 'coeff',
     'get_probes': 'probes'
 }
 
@@ -88,9 +89,9 @@ class OpenFoamPost:
         forces = []
         for _, line in enumerate(lines):
             # Process line if not comment and first word is a valid number (time-step)
-            if not line.startswith('#') and line.split(' ')[0].replace('.','',1).isnumeric():
+            if not line.startswith('#') and re.split('\s+', line)[0].replace('.','',1).isnumeric():
                 # Get time-step
-                times.append(float(line.split(' ')[0])) 
+                times.append(float(re.split('\s+', line)[0])) 
                 
                 # Build nested list of force data
                 sIdx = line.find('(')
@@ -99,7 +100,58 @@ class OpenFoamPost:
                 forces.append( force_step )
 
         return {'times': np.array(times), 'forces':np.array(forces)}
-                        
+
+    @classmethod
+    def get_coeff(
+        cls,
+        function_name: str,
+        time_step: int,
+        *, env_dir: str
+    ) -> Union[Dict, None]:
+        """Extracts force coefficients values from OpenFOAM files
+
+        Args:
+            function_name (str): Name of the force function in the controlDict
+            time_step (int): initial time-step of simulation
+            env_dir (str): Path to OpenFOAM simulation folder. Forced keyword.
+
+        Returns:
+            Dict: Dictionary of numpy arrays
+        """
+        logger.info('Getting forcing coefficients from OpenFOAM simulation.')
+
+        force_folder = os.path.join(env_dir, 'postProcessing', function_name, '{:g}'.format(time_step))
+        filenames = [os.path.join(force_folder, f) for f in os.listdir(force_folder) \
+                         if f.startswith('forceCoeffs')]
+        # Get the latest editted force data file
+        force_file = max(filenames, key=os.path.getctime)
+
+        if not os.path.exists(force_file):
+            sub_folder = os.path.join('postProcessing', function_name, 
+                            '{:g}'.format(time_step))
+            logger.error('Could not find forces.dat file to in {:s}.'.format(sub_folder))
+            return FUNCTION_ERROR
+
+        # Read in lines
+        with open(force_file, 'r') as file:
+            lines = file.readlines()
+
+        # Extract force data
+        times = []
+        coeff = []
+        for _, line in enumerate(lines):
+            # Process line if not comment and first word is a valid number (time-step)
+            line = line.strip()
+            if not line.startswith('#') and re.split('\s+', line)[0].replace('.','',1).isnumeric():
+                # Get time-step
+                times.append(float(re.split('\s+', line)[0])) 
+                
+                # Get force coefficients
+                print(re.split('\s+', line)[1:])
+                coeff.append([float(i) for i in re.split('\s+', line)[1:]])
+
+        return {'times': np.array(times), 'coeff':np.array(coeff)}
+
     @classmethod
     def get_probes(
         cls,

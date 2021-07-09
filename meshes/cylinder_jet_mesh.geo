@@ -3,7 +3,7 @@
 // Author: Nicholas Geneva
 // 
 // Export to .msh version 2 ascii
-// Then use: gmshToFoam cylinder_mesh.msh -case ./cylinder
+// Then use: gmshToFoam cylinder_jet_mesh.msh -case ./cylinder
 // Set up cyclic boundaries in the polymesh/boundaries
 SetFactory("OpenCASCADE");
 
