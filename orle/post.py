@@ -69,6 +69,10 @@ class OpenFoamPost:
 
 
         force_folder = os.path.join(env_dir, 'postProcessing', function_name, '{:g}'.format(time_step))
+        if not os.path.exists(force_folder):
+            logger.error('Could not find force folder: {:s}.'.format(force_folder))
+            return FUNCTION_ERROR
+
         filenames = [os.path.join(force_folder, f) for f in os.listdir(force_folder) \
                          if f.startswith('forces')]
         # Get the latest editted force data file
@@ -121,6 +125,10 @@ class OpenFoamPost:
         logger.info('Getting forcing coefficients from OpenFOAM simulation.')
 
         force_folder = os.path.join(env_dir, 'postProcessing', function_name, '{:g}'.format(time_step))
+        if not os.path.exists(force_folder):
+            logger.error('Could not find force coefficient folder: {:s}.'.format(force_folder))
+            return FUNCTION_ERROR
+
         filenames = [os.path.join(force_folder, f) for f in os.listdir(force_folder) \
                          if f.startswith('forceCoeffs')]
         # Get the latest editted force data file
