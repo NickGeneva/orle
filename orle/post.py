@@ -1,8 +1,9 @@
 import os
 import re
+from typing import Dict, List, Tuple, Union
+
 import numpy as np
 
-from typing import Dict, List, Tuple, Union
 from .jlogger import getLogger
 
 logger = getLogger(__name__)

@@ -1,13 +1,14 @@
 import os
 import re
-import yaml
-
-from typing import Dict, List, Tuple, Union 
 from distutils.dir_util import copy_tree
 from shutil import rmtree
-from .utils import clean_config, mkdirs
-from .mods import OpenFoamMods
+from typing import Dict, List, Tuple, Union
+
+import yaml
+
 from .jlogger import getLogger
+from .mods import OpenFoamMods
+from .utils import clean_config, mkdirs
 
 logger = getLogger(__name__)
 

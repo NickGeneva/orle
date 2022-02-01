@@ -1,8 +1,8 @@
-import os
 import errno
-
+import os
 from collections.abc import Iterable
-from typing import Dict, List, Tuple, Union 
+from typing import Dict, List, Tuple, Union
+
 from .jlogger import getLogger
 
 logger = getLogger(__name__)

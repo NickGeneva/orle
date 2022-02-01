@@ -1,5 +1,6 @@
 import argparse
 
+
 class Parser(argparse.ArgumentParser):
     """Program arguments
     """

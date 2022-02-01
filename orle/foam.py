@@ -1,10 +1,10 @@
 import os
 import re
 import time
+from typing import Dict, List, Tuple, Union
 
-from typing import Dict, List, Tuple, Union 
-from .mods import OpenFoamMods
 from .jlogger import getLogger
+from .mods import OpenFoamMods
 
 logger = getLogger(__name__)
 

@@ -1,11 +1,12 @@
+import logging
 import os
 import time
-import logging
+from typing import Dict, List, Tuple, Union
+
 import numpy as np
 
-from typing import Dict, List, Tuple, Union
-from .mods import OpenFoamMods
 from .jlogger import getLogger
+from .mods import OpenFoamMods
 
 logger = getLogger(__name__)
 
