@@ -12,6 +12,7 @@ logger = getLogger(__name__)
 
 Config = Union[Dict, List, Tuple]
 
+
 class EnvironmentCleaner(object):
     """ Cleans up environment after post processing. Cleaning functions 
     are mod functions, but are ran after the simulation.
@@ -30,9 +31,7 @@ class EnvironmentCleaner(object):
         self.config = config
         self.dir = foam_dir
 
-    def clean(
-        self,
-    ) -> bool:
+    def clean(self, ) -> bool:
         """Clean up simulation
 
         Returns:
@@ -46,10 +45,13 @@ class EnvironmentCleaner(object):
         for clean in self.config['clean']:
             # Check mod is supported
             if hasattr(OpenFoamMods, clean['func']):
-                out = getattr(OpenFoamMods, clean['func'])(**clean['params'], env_dir=self.dir)
+                out = getattr(OpenFoamMods, clean['func']
+                              )(**clean['params'], env_dir=self.dir)
                 cleared = cleared * out
             else:
-                logger.error('Function {:s} not supported.'.format(clean['func']))
+                logger.error(
+                    'Function {:s} not supported.'.format(clean['func'])
+                )
                 cleared = 0
 
         return bool(cleared)

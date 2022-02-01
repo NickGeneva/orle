@@ -1,4 +1,3 @@
-import logging
 import os
 import random
 import time
@@ -16,16 +15,14 @@ logger = getLogger(__name__)
 
 Config = Union[Dict, List, Tuple]
 
+
 class OrleProcess(object):
     """A ORLE process for running environments
 
     Args:
         world_config (Config): Initialized world configuration this process will operate on
     """
-    def __init__(
-        self,
-        world_config
-    ) -> None:
+    def __init__(self, world_config) -> None:
         """Constructor
         """
         self.config = world_config
@@ -34,10 +31,7 @@ class OrleProcess(object):
         self.job_config = None
         self.env_dir = None
 
-    def start(
-        self,
-        dt: int = 0.1
-    ) -> None:
+    def start(self, dt: int = 0.1) -> None:
         """Start the process's activity
 
         Args:
@@ -46,7 +40,7 @@ class OrleProcess(object):
         logger.info('Starting surveillance for job configs.')
         while True:
             # Sleep process before checking for config file again
-            time.sleep(dt + 0.001*random.random())
+            time.sleep(dt + 0.001 * random.random())
             # Check to see if job is available
             if self.search():
                 # Run job
@@ -54,39 +48,44 @@ class OrleProcess(object):
                 # Clean up
                 self.clean()
                 # All done
-                logger.info('Done processing, job script, resuming surveillance.')
+                logger.info(
+                    'Done processing, job script, resuming surveillance.'
+                )
 
-    def search(
-        self
-    ) -> bool:
+    def search(self) -> bool:
         """Searches the world's config folder for new jobs
 
         Returns:
             bool: If a job config was found
         """
         if not os.path.exists(self.config['job_dir']):
-            logger.warning('Could not find directory for environment job files')
+            logger.warning(
+                'Could not find directory for environment job files'
+            )
             return False
 
-        filenames = [f for f in os.listdir(self.config['job_dir']) if os.path.isfile(os.path.join(self.config['job_dir'], f))]
+        filenames = [
+            f for f in os.listdir(self.config['job_dir'])
+            if os.path.isfile(os.path.join(self.config['job_dir'], f))
+        ]
         for filename in filenames:
             file_path = os.path.join(self.config['job_dir'], filename)
             # Only attempt to parse yml files
             if file_path.endswith('.yml'):
-                self.lock = FileLock(file_path+'.lock')
+                self.lock = FileLock(file_path + '.lock')
                 try:
                     with self.lock.acquire(timeout=1):
                         self.job_file = file_path
-                        logger.info('Acquired job config {:s}'.format(filename))
+                        logger.info(
+                            'Acquired job config {:s}'.format(filename)
+                        )
                         return True
                 except Timeout:
                     pass
 
         return False
 
-    def run(
-        self
-    ) -> None:
+    def run(self) -> None:
         """Set up and run environment job
         """
         # Reset output file logger
@@ -112,9 +111,7 @@ class OrleProcess(object):
             logger.error('Failed clean up, terminating run.')
             return
 
-    def clean(
-        self
-    ) -> None:
+    def clean(self) -> None:
         """Cleans up configs
         """
         # Rename job file to keep in history
@@ -122,24 +119,22 @@ class OrleProcess(object):
         for (dirpath, _, filenames) in os.walk(self.config['job_dir']):
             for filename in filenames:
                 file_path = os.path.join(dirpath, filename)
-                if file_path.startswith(self.job_file+".old"):
+                if file_path.startswith(self.job_file + ".old"):
                     old_count += 1
 
-        os.rename(self.job_file, self.job_file+".old.{:d}".format(old_count))
+        os.rename(self.job_file, self.job_file + ".old.{:d}".format(old_count))
 
         # Now release lock
         # Need to force because of double acquire
         self._lock_counter = 1
-        self.lock.release(force = True)
+        self.lock.release(force=True)
         os.remove(self.lock._lock_file)
         self.lock = None
-        
+
         # Set config object to None
         self.job_config = None
 
-    def job_setup(
-        self
-    ) -> bool:
+    def job_setup(self) -> bool:
         """Sets up environment for running
 
         Returns:
@@ -155,12 +150,12 @@ class OrleProcess(object):
         if not env_builder.validate_config():
             return False
 
-        logger.info('Valid job config file file loaded. Setting up environment folder.')
+        logger.info(
+            'Valid job config file file loaded. Setting up environment folder.'
+        )
         return env_builder.setup_env()
 
-    def job_sim(
-        self
-    ) -> bool:
+    def job_sim(self) -> bool:
         """Runs openfoam simulation
 
         Returns:
@@ -176,25 +171,23 @@ class OrleProcess(object):
 
         return True
 
-    def job_post(
-        self
-    ) -> bool:
+    def job_post(self) -> bool:
         """Runs openfoam simulation
 
         Returns:
             bool: Successful setup
         """
 
-        collector = EnvironmentCollector(self.job_config, self.env_dir, self.config['output_dir'])
+        collector = EnvironmentCollector(
+            self.job_config, self.env_dir, self.config['output_dir']
+        )
 
         # Collect data
         out = collector.collect()
 
         return out
 
-    def job_clean(
-        self
-    ) -> bool:
+    def job_clean(self) -> bool:
         """Cleans openfoam simulation
 
         Returns:

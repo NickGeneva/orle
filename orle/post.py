@@ -15,15 +15,11 @@ FILE_NAMES = {
     'get_probes': 'probes'
 }
 
-class OpenFoamPost:
 
+class OpenFoamPost:
     @classmethod
-    def get_forces(
-        cls,
-        function_name: str,
-        time_step: int,
-        *, env_dir: str
-    ) -> Union[Dict, None]:
+    def get_forces(cls, function_name: str, time_step: int, *,
+                   env_dir: str) -> Union[Dict, None]:
         """Extracts forcing values from OpenFOAM files
 
         Args:
@@ -35,7 +31,8 @@ class OpenFoamPost:
             Dict: Dictionary of numpy arrays
         """
         logger.info('Getting forcing data from OpenFOAM simulation.')
-        def para_search(sub_string:str) -> Tuple[List, int]:
+
+        def para_search(sub_string: str) -> Tuple[List, int]:
             """Helper recursion method for building embedded lists 
             from paranthesis sets
 
@@ -51,7 +48,7 @@ class OpenFoamPost:
             while i < len(sub_string):
                 char = sub_string[i]
                 if char == '(':
-                    sub_list, j = para_search(sub_string[i+1:])
+                    sub_list, j = para_search(sub_string[i + 1:])
                     list0.append(sub_list)
                     # Jump index forward for interval we processed
                     i += j + 1
@@ -68,10 +65,13 @@ class OpenFoamPost:
                 i += 1
             return list0, _
 
-
-        force_folder = os.path.join(env_dir, 'postProcessing', function_name, '{:g}'.format(time_step))
+        force_folder = os.path.join(
+            env_dir, 'postProcessing', function_name, '{:g}'.format(time_step)
+        )
         if not os.path.exists(force_folder):
-            logger.error('Could not find force folder: {:s}.'.format(force_folder))
+            logger.error(
+                'Could not find force folder: {:s}.'.format(force_folder)
+            )
             return FUNCTION_ERROR
 
         filenames = [os.path.join(force_folder, f) for f in os.listdir(force_folder) \
@@ -80,9 +80,13 @@ class OpenFoamPost:
         force_file = max(filenames, key=os.path.getctime)
 
         if not os.path.exists(force_file):
-            sub_folder = os.path.join('postProcessing', function_name, 
-                            '{:g}'.format(time_step))
-            logger.error('Could not find forces.dat file to in {:s}.'.format(sub_folder))
+            sub_folder = os.path.join(
+                'postProcessing', function_name, '{:g}'.format(time_step)
+            )
+            logger.error(
+                'Could not find forces.dat file to in {:s}.'.
+                format(sub_folder)
+            )
             return FUNCTION_ERROR
 
         # Read in lines
@@ -94,25 +98,23 @@ class OpenFoamPost:
         forces = []
         for _, line in enumerate(lines):
             # Process line if not comment and first word is a valid number (time-step)
-            if not line.startswith('#') and re.split('\s+', line)[0].replace('.','',1).isnumeric():
+            if not line.startswith('#') and re.split('\s+', line)[0].replace(
+                '.', '', 1
+            ).isnumeric():
                 # Get time-step
-                times.append(float(re.split('\s+', line)[0])) 
-                
+                times.append(float(re.split('\s+', line)[0]))
+
                 # Build nested list of force data
                 sIdx = line.find('(')
-                eIdx = line.rfind(')')+1
+                eIdx = line.rfind(')') + 1
                 force_step, _ = para_search(line[sIdx:eIdx])
-                forces.append( force_step )
+                forces.append(force_step)
 
-        return {'times': np.array(times), 'forces':np.array(forces)}
+        return {'times': np.array(times), 'forces': np.array(forces)}
 
     @classmethod
-    def get_coeff(
-        cls,
-        function_name: str,
-        time_step: int,
-        *, env_dir: str
-    ) -> Union[Dict, None]:
+    def get_coeff(cls, function_name: str, time_step: int, *,
+                  env_dir: str) -> Union[Dict, None]:
         """Extracts force coefficients values from OpenFOAM files
 
         Args:
@@ -125,9 +127,14 @@ class OpenFoamPost:
         """
         logger.info('Getting forcing coefficients from OpenFOAM simulation.')
 
-        force_folder = os.path.join(env_dir, 'postProcessing', function_name, '{:g}'.format(time_step))
+        force_folder = os.path.join(
+            env_dir, 'postProcessing', function_name, '{:g}'.format(time_step)
+        )
         if not os.path.exists(force_folder):
-            logger.error('Could not find force coefficient folder: {:s}.'.format(force_folder))
+            logger.error(
+                'Could not find force coefficient folder: {:s}.'.
+                format(force_folder)
+            )
             return FUNCTION_ERROR
 
         filenames = [os.path.join(force_folder, f) for f in os.listdir(force_folder) \
@@ -136,9 +143,13 @@ class OpenFoamPost:
         force_file = max(filenames, key=os.path.getctime)
 
         if not os.path.exists(force_file):
-            sub_folder = os.path.join('postProcessing', function_name, 
-                            '{:g}'.format(time_step))
-            logger.error('Could not find forces.dat file to in {:s}.'.format(sub_folder))
+            sub_folder = os.path.join(
+                'postProcessing', function_name, '{:g}'.format(time_step)
+            )
+            logger.error(
+                'Could not find forces.dat file to in {:s}.'.
+                format(sub_folder)
+            )
             return FUNCTION_ERROR
 
         # Read in lines
@@ -151,23 +162,21 @@ class OpenFoamPost:
         for _, line in enumerate(lines):
             # Process line if not comment and first word is a valid number (time-step)
             line = line.strip()
-            if not line.startswith('#') and re.split('\s+', line)[0].replace('.','',1).isnumeric():
+            if not line.startswith('#') and re.split('\s+', line)[0].replace(
+                '.', '', 1
+            ).isnumeric():
                 # Get time-step
-                times.append(float(re.split('\s+', line)[0])) 
-                
+                times.append(float(re.split('\s+', line)[0]))
+
                 # Get force coefficients
                 print(re.split('\s+', line)[1:])
                 coeff.append([float(i) for i in re.split('\s+', line)[1:]])
 
-        return {'times': np.array(times), 'coeff':np.array(coeff)}
+        return {'times': np.array(times), 'coeff': np.array(coeff)}
 
     @classmethod
     def get_probes(
-        cls,
-        function_name: str,
-        field: str,
-        time_step: int,
-        *, env_dir: str
+        cls, function_name: str, field: str, time_step: int, *, env_dir: str
     ) -> Union[Dict, None]:
         """Extracts probing data from OpenFOAM files
 
@@ -180,8 +189,7 @@ class OpenFoamPost:
         Returns:
             Dict: Dictionary of numpy arrays
         """
-
-        def probe_parse(split_string:List) -> List:
+        def probe_parse(split_string: List) -> List:
             """Helper method for parsing probe data of varying dimensionality
 
             Args:
@@ -192,7 +200,7 @@ class OpenFoamPost:
             i = 0
             while i < len(split_string):
                 word = split_string[i]
-                
+
                 num = ""
                 for j in range(len(word)):
                     letter = word[j]
@@ -203,15 +211,22 @@ class OpenFoamPost:
                         list_stack[-1].append(list0)
                     else:
                         num += letter
-                        if j+1 == len(word) or word[j+1] == ")":
+                        if j + 1 == len(word) or word[j + 1] == ")":
                             list_stack[-1].append(float(num))
                             num = ""
                 i += 1
             return list_stack[0]
 
-        probe_file = os.path.join(env_dir, 'postProcessing', function_name, '{:g}'.format(time_step), field)
+        probe_file = os.path.join(
+            env_dir, 'postProcessing', function_name, '{:g}'.format(time_step),
+            field
+        )
         if not os.path.exists(probe_file):
-            logger.error('Could not find {:s} probe file for at time-step {:s}.'.format(field, '{:g}'.format(time_step)))
+            logger.error(
+                'Could not find {:s} probe file for at time-step {:s}.'.format(
+                    field, '{:g}'.format(time_step)
+                )
+            )
             return FUNCTION_ERROR
 
         # Read in lines
@@ -229,11 +244,12 @@ class OpenFoamPost:
                 continue
 
             # Process line if not comment and first word is a valid number (time-step)
-            if not line[0].startswith('#') and line[0].replace('.','',1).isnumeric():
+            if not line[0].startswith('#') and line[0].replace('.', '',
+                                                               1).isnumeric():
                 # Build multi-dim list based on paranthesis
                 probe_step = probe_parse(line[1:])
 
                 times.append(float(line[0]))
                 probes.append(probe_step)
 
-        return {'times': np.array(times), 'probes':np.array(probes)}
+        return {'times': np.array(times), 'probes': np.array(probes)}

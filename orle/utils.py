@@ -10,14 +10,10 @@ logger = getLogger(__name__)
 Config = Union[Dict, List, Tuple]
 
 # Since $WORLD may depend on $LOCAL place it first.
-CONFIG_VARS = {
-    "$WORLD": os.getcwd(),
-    "$LOCAL": os.getcwd()
-}
+CONFIG_VARS = {"$WORLD": os.getcwd(), "$LOCAL": os.getcwd()}
 
-def clean_config(
-    config: Config
-) -> Config:
+
+def clean_config(config: Config) -> Config:
     """Cleans up configuration file replacing any defined variables
 
     Args:
@@ -26,7 +22,6 @@ def clean_config(
     Returns:
         Config: Cleaned config
     """
-
     def config_search(config):
         """Simple depth first search of config object
         """
@@ -34,9 +29,9 @@ def clean_config(
             # If this is world dict, update path variable
             if "world_dir" in config.keys():
                 CONFIG_VARS['$WORLD'] = config['world_dir']
-                
+
             for k, v in config.items():
-                config[k] = config_search(v)     
+                config[k] = config_search(v)
         elif isinstance(config, list):
             for i, v in enumerate(config):
                 config[i] = config_search(v)
@@ -50,10 +45,7 @@ def clean_config(
     return config_search(config)
 
 
-def mkdirs(
-    self, 
-    *directories
-) -> None:
+def mkdirs(self, *directories) -> None:
     """Makes directories if it does not exist
 
     Args:

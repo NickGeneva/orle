@@ -10,6 +10,7 @@ logger = getLogger(__name__)
 
 Config = Union[Dict, List, Tuple]
 
+
 class FOAMRunner(object):
     """Interfaces with OpenFOAM library
 
@@ -17,20 +18,13 @@ class FOAMRunner(object):
         config (Config): environment job config
         foam_dir (str): directory path to OpenFOAM simulation
     """
-    def __init__(
-        self,
-        config: Config,
-        foam_dir: str
-    ) -> None:
+    def __init__(self, config: Config, foam_dir: str) -> None:
         """Constructor
         """
         self.config = config
         self.dir = foam_dir
 
-    def decompose(
-        self,
-        force: bool = False
-    ) -> None:
+    def decompose(self, force: bool = False) -> None:
         """Decomposes fluid simulation domain into sub folders
 
         Args:
@@ -39,33 +33,45 @@ class FOAMRunner(object):
         if self.config['params']['np'] == 1:
             logger.warning('Using only 1 process, no need to decompose.')
             return
-        
+
         # First get the start time from control dict
         start_time = self.get_start_timestep()
 
         # Set decomposeParDict to number of procs for consistency
-        cleared = OpenFoamMods.set_decompose_dict({"numberOfSubdomains": self.config['params']['np']}, env_dir=self.dir)
+        cleared = OpenFoamMods.set_decompose_dict(
+            {"numberOfSubdomains": self.config['params']['np']},
+            env_dir=self.dir
+        )
         if cleared == 0:
-            logger.warning('Failed to successfully modify the decomposeParDict.')
+            logger.warning(
+                'Failed to successfully modify the decomposeParDict.'
+            )
 
-            
         # Validate the existing processor folders
         proc_folders = [os.path.join(self.dir, f) for f in os.listdir(self.dir) \
                          if f.startswith('processor') and os.path.isdir(os.path.join(self.dir, f))]
 
         folders = True
         if not len(proc_folders) == self.config['params']['np']:
-            logger.warning( 'Inconsistent number of processor folders found, forcing decomposePar.' )
+            logger.warning(
+                'Inconsistent number of processor folders found, forcing decomposePar.'
+            )
             folders = False
         else:
             # If consistent processor folders, check each for initial time-step folder
             for i in range(self.config['params']['np']):
-                proc_folder = os.path.join(self.dir, 'processor{:d}'.format(i), '{:g}'.format(start_time))
+                proc_folder = os.path.join(
+                    self.dir, 'processor{:d}'.format(i),
+                    '{:g}'.format(start_time)
+                )
                 if not os.path.exists(proc_folder):
-                    logger.warning( 'Necessary process folder {:s} not found, forcing decomposePar.'.format(proc_folder))
+                    logger.warning(
+                        'Necessary process folder {:s} not found, forcing decomposePar.'
+                        .format(proc_folder)
+                    )
                     folders = False
                     break
-        
+
         if not folders or self.config['params']['decompose'] or force:
             logger.warning('Decomposing domain.')
             # Run openfoam command
@@ -76,36 +82,50 @@ class FOAMRunner(object):
 
             time.sleep(0.1)
 
-    def run(
-        self,
-    ) -> None:
+    def run(self, ) -> None:
         """Runs the OpenFOAM simulation
         """
         # Set the control application field for consistency
-        OpenFoamMods.set_control_dict({'application': self.config['params']['solver']}, env_dir=self.dir)
+        OpenFoamMods.set_control_dict(
+            {'application': self.config['params']['solver']}, env_dir=self.dir
+        )
 
         # Single core
         if self.config['params']['np'] == 1:
-            logger.warning('Running {:s} on single thread.'.format(self.config['params']['solver']))
+            logger.warning(
+                'Running {:s} on single thread.'.format(
+                    self.config['params']['solver']
+                )
+            )
             owd = os.getcwd()
             os.chdir(self.dir)
-            os.system("{:s} {:s}".format(self.config['params']['solver'], 
-                    self.config['params']['args']))
+            os.system(
+                "{:s} {:s}".format(
+                    self.config['params']['solver'],
+                    self.config['params']['args']
+                )
+            )
             os.chdir(owd)
-        
+
         # Parallel
         else:
-            logger.warning('Running {:s} in parallel.'.format(self.config['params']['solver']))
+            logger.warning(
+                'Running {:s} in parallel.'.format(
+                    self.config['params']['solver']
+                )
+            )
             owd = os.getcwd()
             os.chdir(self.dir)
-            os.system("mpirun -np {:d} {:s} -parallel {:s}".format(
-                    self.config['params']['np'], self.config['params']['solver'], 
-                    self.config['params']['args']))
+            os.system(
+                "mpirun -np {:d} {:s} -parallel {:s}".format(
+                    self.config['params']['np'],
+                    self.config['params']['solver'],
+                    self.config['params']['args']
+                )
+            )
             os.chdir(owd)
-    
-    def reconstruct(
-        self
-    ) -> None:
+
+    def reconstruct(self) -> None:
         """Reconstructs OpenFOAM field from parallel folders
         """
         if self.config['params']['np'] == 1:
@@ -114,18 +134,15 @@ class FOAMRunner(object):
 
         if self.config['params']['reconstruct'] == False:
             return
-        
+
         time = self.get_end_timestep()
 
         owd = os.getcwd()
         os.chdir(self.dir)
-        os.system( "reconstructPar -time {:g}".format( time ) )
+        os.system("reconstructPar -time {:g}".format(time))
         os.chdir(owd)
 
-
-    def get_start_timestep(
-        self
-    ) -> float:
+    def get_start_timestep(self) -> float:
         """Gets the starting timestep from controlDict
 
         Returns:
@@ -139,18 +156,16 @@ class FOAMRunner(object):
 
         # Read in lines
         with open(control_file, 'r') as file:
-            lines = file.readlines() 
+            lines = file.readlines()
 
         for _, line in enumerate(lines):
             if line.lstrip().startswith("startTime"):
                 start_time = float(re.findall(r'\d*\.?\d+', line)[0])
                 return start_time
-        
-        return 0   
 
-    def get_end_timestep(
-        self
-    ) -> float:
+        return 0
+
+    def get_end_timestep(self) -> float:
         """Gets the ending timestep from controlDict
 
         Returns:
@@ -164,11 +179,11 @@ class FOAMRunner(object):
 
         # Read in lines
         with open(control_file, 'r') as file:
-            lines = file.readlines() 
+            lines = file.readlines()
 
         for _, line in enumerate(lines):
             if line.lstrip().startswith("endTime"):
                 end_time = float(re.findall(r'\d*\.?\d+', line)[0])
                 return end_time
-        
-        return 0  
+
+        return 0

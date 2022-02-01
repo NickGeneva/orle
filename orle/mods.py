@@ -18,7 +18,7 @@ def parallelmod(func):
     """
     @functools.wraps(func)
     def parallel_mod_wrapper(
-        *args, 
+        *args,
         **kwargs,
     ) -> bool:
         # Modify env_dir to sub process folders
@@ -28,7 +28,7 @@ def parallelmod(func):
             logger.error('Could not find environment directory.')
             return FUNCTION_ERROR
 
-        # Get process folders 
+        # Get process folders
         proc_folders = [os.path.join(env_dir, f) for f in os.listdir(env_dir) \
                          if f.startswith('processor') and os.path.isdir(os.path.join(env_dir, f))]
 
@@ -37,34 +37,37 @@ def parallelmod(func):
         if len(proc_folders) > 0:
             # If process folders present loop through them
             for proc_f in proc_folders:
-                logger.info( 'Modifying process folder {:s}.'.format(os.path.basename(os.path.normpath(proc_f))) )
+                logger.info(
+                    'Modifying process folder {:s}.'.format(
+                        os.path.basename(os.path.normpath(proc_f))
+                    )
+                )
                 mkwargs = kwargs.copy()
                 mkwargs['env_dir'] = proc_f
 
                 if not func(*args, **mkwargs):
-                    logger.warning( 'Failed modding process folder {:s}.'.format( proc_f ) )
+                    logger.warning(
+                        'Failed modding process folder {:s}.'.format(proc_f)
+                    )
                     output = FUNCTION_ERROR
 
         # Non-decomposed environment or failure, always try this in case of decompose force
         output_serial = func(*args, **kwargs)
 
         if not output:
-            logger.warning( 'Failed editting process folders.' ) 
+            logger.warning('Failed editting process folders.')
             output = output_serial
 
         return output
 
     return parallel_mod_wrapper
 
+
 class OpenFoamMods:
     """Stores different modification functions for openFOAM simulations
     """
     @classmethod
-    def set_control_dict(
-        cls,
-        props,
-        *, env_dir:str
-    ) -> bool:
+    def set_control_dict(cls, props, *, env_dir: str) -> bool:
         """Sets core parameters in the control dictionary of simulation.
         This method only edits parameters, it will not add new parameters.
 
@@ -86,7 +89,7 @@ class OpenFoamMods:
 
         # Read in lines
         with open(control_file, 'r') as file:
-            lines = file.readlines() 
+            lines = file.readlines()
 
         # Edit props in control dict
         output = FUNCTION_SUCCESS
@@ -99,7 +102,9 @@ class OpenFoamMods:
                     break
 
             if not edited:
-                logger.warning('Prop {:s} not present in control dict.'.format(k))
+                logger.warning(
+                    'Prop {:s} not present in control dict.'.format(k)
+                )
                 output = FUNCTION_ERROR
 
         # Write to file
@@ -109,11 +114,7 @@ class OpenFoamMods:
         return output
 
     @classmethod
-    def set_decompose_dict(
-        cls,
-        props,
-        *, env_dir:str
-    ) -> bool:
+    def set_decompose_dict(cls, props, *, env_dir: str) -> bool:
         """Sets parameters in the decompose par dict for parallel simulations.
         This method only edits parameters, it will not add new parameters.
 
@@ -135,7 +136,7 @@ class OpenFoamMods:
 
         # Read in lines
         with open(control_file, 'r') as file:
-            lines = file.readlines() 
+            lines = file.readlines()
 
         # Edit props in control dict
         output = FUNCTION_SUCCESS
@@ -148,7 +149,9 @@ class OpenFoamMods:
                     break
 
             if not edited:
-                logger.warning('Prop {:s} not present in decompose dict.'.format(k))
+                logger.warning(
+                    'Prop {:s} not present in decompose dict.'.format(k)
+                )
                 output = FUNCTION_ERROR
 
         # Write to file
@@ -158,11 +161,7 @@ class OpenFoamMods:
         return output
 
     @classmethod
-    def set_viscosity(
-        cls,
-        visc: int,
-        *, env_dir: str
-    ) -> bool:
+    def set_viscosity(cls, visc: int, *, env_dir: str) -> bool:
         """Sets the viscosity of OpenFOAM environment 
 
         Args:
@@ -174,10 +173,14 @@ class OpenFoamMods:
         """
         logger.info('Setting viscosity.')
 
-        transport_file = os.path.join(env_dir, 'constant', 'transportProperties')
+        transport_file = os.path.join(
+            env_dir, 'constant', 'transportProperties'
+        )
 
         if not os.path.exists(transport_file):
-            logger.error('Could not find transportProperties file to edit viscosity.')
+            logger.error(
+                'Could not find transportProperties file to edit viscosity.'
+            )
             return FUNCTION_ERROR
 
         # Read in lines
@@ -198,12 +201,8 @@ class OpenFoamMods:
     @classmethod
     @parallelmod
     def set_boundary(
-        cls,
-        field: str,
-        boundary: str,
-        time_step: int,
-        props: Dict,
-        *, env_dir: str
+        cls, field: str, boundary: str, time_step: int, props: Dict, *,
+        env_dir: str
     ) -> bool:
         """Sets mesh boundary of field to specified property
 
@@ -217,12 +216,17 @@ class OpenFoamMods:
         Returns:
             bool: Successful modification
         """
-        logger.info('Setting {:s} boundary {:s} parameters.'.format(field, boundary))
+        logger.info(
+            'Setting {:s} boundary {:s} parameters.'.format(field, boundary)
+        )
 
         field_file = os.path.join(env_dir, '{:g}'.format(time_step), field)
 
         if not os.path.exists(field_file):
-            logger.warning('Could not find field file {:s} at time-step {:g} to edit.'.format(field, time_step))
+            logger.warning(
+                'Could not find field file {:s} at time-step {:g} to edit.'.
+                format(field, time_step)
+            )
             return FUNCTION_ERROR
 
         # Read in text
@@ -234,7 +238,7 @@ class OpenFoamMods:
         if start_index == -1:
             logger.error('Boundary {:s} not valid.'.format(boundary))
             return FUNCTION_ERROR
-        
+
         # Search for closing curly bracket
         curly_stack = 0
         end_index = -1
@@ -257,22 +261,18 @@ class OpenFoamMods:
             new_prop += "\t\t{:s}\t\t{:s};\n".format(k, v)
         new_prop += "\t}"
 
-        text = text[:start_index] + new_prop + text[end_index+1:]
+        text = text[:start_index] + new_prop + text[end_index + 1:]
 
         # Write text
         with open(field_file, 'w') as file:
             file.write(text)
 
         return FUNCTION_SUCCESS
-        
 
     @classmethod
     @parallelmod
     def set_saved_field_times(
-        cls,
-        save_interval: float,
-        save_times: List,
-        *, env_dir: str
+        cls, save_interval: float, save_times: List, *, env_dir: str
     ) -> bool:
         """Retains the specified time-steps that are of a given interval.
         Will delete time-step data that does not satisfy the desired. Typically
@@ -293,7 +293,7 @@ class OpenFoamMods:
         # Get saved time-steps
         time_folders = [f for f in os.listdir(env_dir) if f.replace('.','',1).isnumeric() \
                         and os.path.isdir(os.path.join(env_dir, f))]
-        
+
         # Sort and remove any time state are to be kept
         time_folders.sort()
         if not save_times is None:
@@ -301,17 +301,23 @@ class OpenFoamMods:
                 try:
                     time_folders.remove(str(time))
                 except ValueError:
-                    pass                
+                    pass
 
         # Loop through numeric folders and delete any not on desired interval
         for time_step in time_folders:
             if not Decimal(time_step) % Decimal(str(save_interval)) == 0:
                 folder_path = os.path.join(env_dir, time_step)
                 try:
-                    logger.info('Deleting time-step folder {:s}.'.format(time_step))
+                    logger.info(
+                        'Deleting time-step folder {:s}.'.format(time_step)
+                    )
                     rmtree(folder_path)
                 except OSError as e:
-                    logger.error('Issue deleting time-step folder: {:s}'.format(e.strerror))
+                    logger.error(
+                        'Issue deleting time-step folder: {:s}'.format(
+                            e.strerror
+                        )
+                    )
                     return FUNCTION_ERROR
 
         return FUNCTION_SUCCESS
